@@ -1,19 +1,27 @@
 import OpenAI from "openai";
 
+export const runtime = "nodejs";
+
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "Unknown server error";
+}
+
 export async function POST(req: Request) {
   try {
     if (!process.env.OPENAI_API_KEY) {
-      return Response.json({ error: "OPENAI_API_KEY is not configured" }, { status: 500 });
+      return Response.json({ error: "OPENAI_API_KEY is not configured in Vercel Environment Variables." }, { status: 500 });
     }
 
     const { idea, style, length, voice, platform } = await req.json();
 
     if (!idea || typeof idea !== "string") {
-      return Response.json({ error: "Video idea is required" }, { status: 400 });
+      return Response.json({ error: "Video idea is required." }, { status: 400 });
     }
 
     const completion = await client.chat.completions.create({
@@ -35,7 +43,8 @@ export async function POST(req: Request) {
 
     return Response.json({ script });
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Failed to generate script" }, { status: 500 });
+    const message = getErrorMessage(error);
+    console.error("VIDDO script generation error:", message);
+    return Response.json({ error: message }, { status: 500 });
   }
 }
