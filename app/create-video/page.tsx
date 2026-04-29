@@ -26,9 +26,29 @@ export default function CreateVideoPage() {
 
   const selectedStyle = useMemo(() => styles.find((item) => item.id === style), [style]);
 
-  function handleGenerate() {
-    alert("Next step: AI script generation will be connected here.");
-  }
+const [script, setScript] = useState("");
+const [loading, setLoading] = useState(false);
+
+async function handleGenerate() {
+  setLoading(true);
+  setScript("");
+
+  const res = await fetch("/api/generate-script", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      idea,
+      style,
+      length,
+      voice,
+      platform
+    })
+  });
+
+  const data = await res.json();
+  setScript(data.script);
+  setLoading(false);
+}
 
   return (
     <main className="min-h-screen bg-[#070A12] text-white">
@@ -115,6 +135,15 @@ export default function CreateVideoPage() {
                 Generate Video
                 <Wand2 className="w-5 h-5 ml-2" />
               </Button>
+              {loading && <p className="mt-4 text-blue-400">Generating...</p>}
+
+              {script && (
+                <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-xl">
+                <pre className="whitespace-pre-wrap text-sm text-white">
+                {script}
+              </pre>
+             </div>
+              )}
             </CardContent>
           </Card>
 
