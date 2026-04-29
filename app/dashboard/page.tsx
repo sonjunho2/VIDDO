@@ -56,7 +56,11 @@ export default function DashboardPage() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-sm text-blue-100 mb-6"><Sparkles className="w-4 h-4" /> Creator Dashboard</div>
               <h1 className="text-4xl md:text-5xl font-black mb-4">Create your next AI video</h1>
               <p className="text-zinc-300 max-w-2xl mb-8">This dashboard is ready for the next step: AI script generation, voiceover, subtitles, and video rendering.</p>
-              <Button className="h-14 px-7 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-bold"><Plus className="w-5 h-5 mr-2" /> Create Video</Button>
+              <Link href="/create-video">
+                <Button className="h-14 px-7 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-bold">
+                  <Plus className="w-5 h-5 mr-2" /> Create Video
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
