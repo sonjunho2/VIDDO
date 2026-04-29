@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Captions, Check, Clock, Mic, Play, Sparkles, Video, Wand2 } from "lucide-react";
+import { ArrowLeft, Captions, Check, Clock, Loader2, Mic, Play, Sparkles, Video, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -23,32 +23,49 @@ export default function CreateVideoPage() {
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
   const [platform, setPlatform] = useState("YouTube Shorts");
+  const [script, setScript] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const selectedStyle = useMemo(() => styles.find((item) => item.id === style), [style]);
 
-const [script, setScript] = useState("");
-const [loading, setLoading] = useState(false);
+  async function handleGenerate() {
+    setError("");
 
-async function handleGenerate() {
-  setLoading(true);
-  setScript("");
+    if (!idea.trim()) {
+      setError("Please enter a video idea first.");
+      return;
+    }
 
-  const res = await fetch("/api/generate-script", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      idea,
-      style,
-      length,
-      voice,
-      platform
-    })
-  });
+    setLoading(true);
+    setScript("");
 
-  const data = await res.json();
-  setScript(data.script);
-  setLoading(false);
-}
+    try {
+      const res = await fetch("/api/generate-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea,
+          style: selectedStyle?.name ?? style,
+          length,
+          voice,
+          platform
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to generate script.");
+      }
+
+      setScript(data?.script || "No script returned.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate script.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#070A12] text-white">
@@ -74,11 +91,11 @@ async function handleGenerate() {
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">Create a new AI video</h1>
           <p className="text-zinc-400 text-lg max-w-2xl">
-            Start with your idea. VIDDO will turn it into a ready-to-post video flow with script, voice, subtitles, and editing.
+            Start with your idea. VIDDO will create a script first, then we will connect voice, subtitles, and final video rendering.
           </p>
         </section>
 
-        <section className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 items-start">
+        <section className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6 items-start">
           <Card className="bg-white/[0.04] border-white/10 rounded-3xl">
             <CardContent className="p-6 md:p-8">
               <div className="mb-7">
@@ -96,6 +113,7 @@ async function handleGenerate() {
                 <div className="grid md:grid-cols-2 gap-3">
                   {styles.map((item) => (
                     <button
+                      type="button"
                       key={item.id}
                       onClick={() => setStyle(item.id)}
                       className={`text-left rounded-2xl border p-4 transition ${style === item.id ? "bg-blue-500/15 border-blue-400/50" : "bg-black/20 border-white/10 hover:bg-white/[0.06]"}`}
@@ -110,7 +128,7 @@ async function handleGenerate() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4 mb-8">
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-bold text-zinc-300 mb-3">3. Length</label>
                   <select value={length} onChange={(event) => setLength(event.target.value)} className="w-full h-12 rounded-2xl bg-black/30 border border-white/10 px-4 text-white outline-none focus:border-blue-400">
@@ -131,19 +149,25 @@ async function handleGenerate() {
                 </div>
               </div>
 
-              <Button onClick={handleGenerate} className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-500 hover:opacity-90 text-base font-black">
-                Generate Video
-                <Wand2 className="w-5 h-5 ml-2" />
-              </Button>
-              {loading && <p className="mt-4 text-blue-400">Generating...</p>}
-
-              {script && (
-                <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-xl">
-                <pre className="whitespace-pre-wrap text-sm text-white">
-                {script}
-              </pre>
-             </div>
+              {error && (
+                <div className="mb-5 rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
+                  {error}
+                </div>
               )}
+
+              <Button onClick={handleGenerate} disabled={loading} className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-500 hover:opacity-90 text-base font-black disabled:opacity-60">
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Generating Script...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-5 h-5 mr-2" />
+                    Generate Script
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
 
@@ -152,29 +176,21 @@ async function handleGenerate() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <p className="text-sm text-zinc-400">Video Preview</p>
-                    <h2 className="text-2xl font-black">Generation Summary</h2>
+                    <p className="text-sm text-zinc-400">Generation Summary</p>
+                    <h2 className="text-2xl font-black">AI Script Result</h2>
                   </div>
-                  <div className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-xs border border-blue-400/20">Draft</div>
+                  <div className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-xs border border-blue-400/20">Script</div>
                 </div>
 
-                <div className="aspect-[9/16] max-h-[520px] mx-auto rounded-3xl bg-gradient-to-br from-blue-500/30 via-violet-500/25 to-black border border-white/10 flex items-center justify-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-white/15 border border-white/20 flex items-center justify-center backdrop-blur">
-                    <Play className="w-8 h-8 text-white ml-1" />
-                  </div>
+                <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4"><p className="text-zinc-400 mb-1">Style</p><p className="font-bold">{selectedStyle?.name}</p></div>
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4"><p className="text-zinc-400 mb-1">Platform</p><p className="font-bold">{platform}</p></div>
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4 flex items-center gap-2"><Clock className="w-4 h-4 text-blue-300" /><p className="font-bold">{length}</p></div>
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4 flex items-center gap-2"><Mic className="w-4 h-4 text-blue-300" /><p className="font-bold">{voice}</p></div>
                 </div>
 
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-start gap-3 rounded-2xl bg-white/[0.04] border border-white/10 p-4">
-                    <Sparkles className="w-5 h-5 text-blue-300 mt-0.5" />
-                    <div><p className="font-bold">Idea</p><p className="text-zinc-400">{idea || "Your idea will appear here."}</p></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4"><p className="text-zinc-400 mb-1">Style</p><p className="font-bold">{selectedStyle?.name}</p></div>
-                    <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4"><p className="text-zinc-400 mb-1">Platform</p><p className="font-bold">{platform}</p></div>
-                    <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4 flex items-center gap-2"><Clock className="w-4 h-4 text-blue-300" /><p className="font-bold">{length}</p></div>
-                    <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4 flex items-center gap-2"><Mic className="w-4 h-4 text-blue-300" /><p className="font-bold">{voice}</p></div>
-                  </div>
+                <div className="rounded-2xl bg-black/30 border border-white/10 p-5 min-h-[360px] whitespace-pre-wrap text-zinc-200 leading-relaxed">
+                  {loading ? "VIDDO is writing your script..." : script || "Your generated script will appear here after you click Generate Script."}
                 </div>
               </CardContent>
             </Card>
@@ -183,10 +199,9 @@ async function handleGenerate() {
               <CardContent className="p-6">
                 <h3 className="text-xl font-black mb-4">Next engine steps</h3>
                 <div className="space-y-3 text-zinc-300">
-                  <div className="flex items-center gap-3"><Check className="w-4 h-4 text-blue-300" /> Create video request form</div>
-                  <div className="flex items-center gap-3"><Sparkles className="w-4 h-4 text-blue-300" /> Connect AI script generation</div>
-                  <div className="flex items-center gap-3"><Mic className="w-4 h-4 text-blue-300" /> Connect AI voiceover</div>
-                  <div className="flex items-center gap-3"><Captions className="w-4 h-4 text-blue-300" /> Add subtitles and rendering</div>
+                  <div className="flex items-center gap-3"><Check className="w-4 h-4 text-blue-300" /> Script generation connected</div>
+                  <div className="flex items-center gap-3"><Mic className="w-4 h-4 text-blue-300" /> Next: AI voiceover</div>
+                  <div className="flex items-center gap-3"><Captions className="w-4 h-4 text-blue-300" /> Then: subtitles and rendering</div>
                 </div>
               </CardContent>
             </Card>
