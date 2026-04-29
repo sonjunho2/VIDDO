@@ -1,6 +1,15 @@
-# VIDDO Site
+# VIDDO
 
-VIDDO is an AI video automation SaaS landing page built with Next.js and Tailwind CSS.
+VIDDO is an AI video automation SaaS starter project.
+
+Current version includes:
+
+- Global SaaS landing page
+- Supabase email/password signup
+- Supabase login/logout
+- Protected dashboard starter screen
+- Pricing section
+- Tailwind CSS design system
 
 ## 1. Install
 
@@ -8,7 +17,26 @@ VIDDO is an AI video automation SaaS landing page built with Next.js and Tailwin
 npm install
 ```
 
-## 2. Run locally
+## 2. Create Supabase project
+
+1. Go to Supabase
+2. Create a new project
+3. Open Project Settings
+4. Open API
+5. Copy these values:
+   - Project URL
+   - anon public key
+
+## 3. Create environment file
+
+Copy `.env.local.example` and rename it to `.env.local`.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+## 4. Run locally
 
 ```bash
 npm run dev
@@ -16,48 +44,40 @@ npm run dev
 
 Open:
 
-```text
+```bash
 http://localhost:3000
 ```
 
-## 3. Build test
+## 5. Pages
 
-```bash
-npm run build
-```
+- `/` landing page
+- `/signup` signup page
+- `/login` login page
+- `/dashboard` dashboard page
 
-## 4. Upload to GitHub
-
-1. Create a new GitHub repository named `viddo-site`.
-2. Upload all files in this folder.
-3. Or use Git commands:
+## 6. Upload to GitHub
 
 ```bash
 git init
 git add .
-git commit -m "Initial VIDDO landing page"
+git commit -m "Initial VIDDO Supabase auth version"
 git branch -M main
-git remote add origin https://github.com/YOUR_ID/viddo-site.git
+git remote add origin https://github.com/YOUR_USERNAME/viddo-site.git
 git push -u origin main
 ```
 
-## 5. Project structure
+## 7. Next development step
 
-```text
-app/page.tsx              Main landing page
-app/layout.tsx            Site metadata and layout
-app/globals.css           Global Tailwind CSS
-components/ui/button.tsx  Reusable button component
-components/ui/card.tsx    Reusable card component
-lib/utils.ts              CSS utility helper
-```
+Recommended next step:
 
-## Next edit plan
+Create the `/create-video` page.
 
-Next step: add the Create Video page.
+This page will include:
 
-Suggested path:
+- Video idea input
+- Style selection
+- Length selection
+- Voice selection
+- Generate button
 
-```text
-app/create/page.tsx
-```
+After that, connect AI script generation.

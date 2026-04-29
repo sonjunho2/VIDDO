@@ -36,10 +36,10 @@ export default function Home() {
           <a href="#features" className="hover:text-white transition">Features</a>
           <a href="#how" className="hover:text-white transition">How it works</a>
           <a href="#pricing" className="hover:text-white transition">Pricing</a>
-          <a href="#" className="hover:text-white transition">Login</a>
+          <a href="/login" className="hover:text-white transition">Login</a>
         </nav>
 
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-5">Get Started</Button>
+        <a href="/signup"><Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-5">Get Started</Button></a>
       </header>
 
       <main className="relative z-10">
@@ -51,7 +51,7 @@ export default function Home() {
             <h1 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-tight mb-7">Create Viral Videos in Seconds with AI</h1>
             <p className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-9">Turn any idea into ready-to-post videos with AI scripts, voiceovers, subtitles, and auto-editing.</p>
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <Button className="h-14 px-7 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-bold shadow-xl shadow-blue-500/25">Get Started Free <ArrowRight className="w-5 h-5 ml-2" /></Button>
+              <a href="/signup"><Button className="h-14 px-7 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-bold shadow-xl shadow-blue-500/25">Get Started Free <ArrowRight className="w-5 h-5 ml-2" /></Button></a>
               <Button variant="outline" className="h-14 px-7 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10 text-white text-base font-bold"><Play className="w-5 h-5 mr-2" /> Watch Demo</Button>
             </div>
             <div className="flex flex-wrap gap-5 text-sm text-zinc-300">
@@ -96,7 +96,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-3 gap-6">{pricing.map((plan) => (<Card key={plan.name} className={`rounded-3xl border ${plan.featured ? "bg-blue-500/10 border-blue-400/40 shadow-2xl shadow-blue-500/20" : "bg-white/[0.04] border-white/10"}`}><CardContent className="p-7">{plan.featured && <div className="inline-block mb-4 px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-bold">MOST POPULAR</div>}<h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3><p className="text-zinc-400 mb-6">{plan.desc}</p><div className="mb-6"><span className="text-5xl font-black text-white">{plan.price}</span><span className="text-zinc-400"> / month</span></div><Button className={`w-full h-12 rounded-2xl mb-6 ${plan.featured ? "bg-blue-500 hover:bg-blue-600" : "bg-white/10 hover:bg-white/15"}`}>Choose Plan</Button><div className="space-y-3">{plan.items.map((item) => (<div key={item} className="flex items-center gap-3 text-zinc-300"><Check className="w-4 h-4 text-blue-400" />{item}</div>))}</div></CardContent></Card>))}</div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-6 py-20 pb-28"><div className="rounded-[2rem] bg-gradient-to-r from-blue-600 to-violet-600 p-10 md:p-14 text-center shadow-2xl shadow-blue-500/20"><h2 className="text-4xl md:text-5xl font-black mb-5">Ready to create your first AI video?</h2><p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">Start with an idea. VIDDO turns it into a video you can post, test, and grow with.</p><Button className="h-14 px-8 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 text-base font-black">Get Started Free <ArrowRight className="w-5 h-5 ml-2" /></Button></div></section>
+        <section className="max-w-7xl mx-auto px-6 py-20 pb-28"><div className="rounded-[2rem] bg-gradient-to-r from-blue-600 to-violet-600 p-10 md:p-14 text-center shadow-2xl shadow-blue-500/20"><h2 className="text-4xl md:text-5xl font-black mb-5">Ready to create your first AI video?</h2><p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">Start with an idea. VIDDO turns it into a video you can post, test, and grow with.</p><a href="/signup"><Button className="h-14 px-8 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 text-base font-black">Get Started Free <ArrowRight className="w-5 h-5 ml-2" /></Button></a></div></section>
       </main>
     </div>
   );
