@@ -1,5 +1,6 @@
 "use client";
 
+import VideoRenderer from "@/components/VideoRenderer";
 import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useState } from "react";
 import Link from "next/link";
@@ -205,6 +206,12 @@ export default function CreateVideoPage() {
                       )}
                     </div>
                     <SubtitleGenerator script={script} />
+                    <VideoRenderer
+                      script={script}
+                      audioUrl={audioUrl}
+                      platform={platform}
+                      length={length}
+                     />
                   </>
                 )}
               </CardContent>
