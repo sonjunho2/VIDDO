@@ -185,25 +185,27 @@ export default function CreateVideoPage() {
                 </div>
 
                 {script && (
-                 <SubtitleGenerator script={script} />
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div>
-                        <h3 className="text-xl font-black flex items-center gap-2"><Mic className="w-5 h-5 text-blue-300" /> Voice Generation</h3>
-                        <p className="text-sm text-zinc-400 mt-1">Mock voice is enabled for testing. Real TTS will be connected later.</p>
+                  <>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                      <div className="flex items-center justify-between gap-4 mb-4">
+                        <div>
+                          <h3 className="text-xl font-black flex items-center gap-2"><Mic className="w-5 h-5 text-blue-300" /> Voice Generation</h3>
+                          <p className="text-sm text-zinc-400 mt-1">Mock voice is enabled for testing. Real TTS will be connected later.</p>
+                        </div>
+                        <Button onClick={handleGenerateVoice} disabled={voiceLoading} className="rounded-2xl bg-blue-500 hover:bg-blue-600 disabled:opacity-60">
+                          {voiceLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Music className="w-4 h-4 mr-2" /> Generate Voice</>}
+                        </Button>
                       </div>
-                      <Button onClick={handleGenerateVoice} disabled={voiceLoading} className="rounded-2xl bg-blue-500 hover:bg-blue-600 disabled:opacity-60">
-                        {voiceLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Music className="w-4 h-4 mr-2" /> Generate Voice</>}
-                      </Button>
-                    </div>
 
-                    {audioUrl && (
-                      <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
-                        <p className="text-sm text-zinc-400 mb-3">Voice Preview</p>
-                        <audio controls src={audioUrl} className="w-full" />
-                      </div>
-                    )}
-                  </div>
+                      {audioUrl && (
+                        <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
+                          <p className="text-sm text-zinc-400 mb-3">Voice Preview</p>
+                          <audio controls src={audioUrl} className="w-full" />
+                        </div>
+                      )}
+                    </div>
+                    <SubtitleGenerator script={script} />
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -214,7 +216,7 @@ export default function CreateVideoPage() {
                 <div className="space-y-3 text-zinc-300">
                   <div className="flex items-center gap-3"><Check className="w-4 h-4 text-blue-300" /> Script generation connected</div>
                   <div className="flex items-center gap-3"><Mic className="w-4 h-4 text-blue-300" /> Voice generation mock connected</div>
-                  <div className="flex items-center gap-3"><Captions className="w-4 h-4 text-blue-300" /> Next: subtitles and rendering</div>
+                  <div className="flex items-center gap-3"><Captions className="w-4 h-4 text-blue-300" /> Subtitles generation connected</div>
                 </div>
               </CardContent>
             </Card>
