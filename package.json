@@ -6,10 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "remotion:preview": "remotion preview remotion/index.ts",
+    "remotion:render": "remotion render remotion/index.ts ViddoShort public/renders/viddo-output.mp4"
   },
   "dependencies": {
     "@radix-ui/react-slot": "1.1.0",
+    "@remotion/cli": "4.0.240",
+    "@remotion/player": "4.0.240",
+    "@remotion/renderer": "4.0.240",
     "@supabase/supabase-js": "2.47.10",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -19,6 +24,7 @@
     "openai": "4.77.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "remotion": "4.0.240",
     "tailwind-merge": "2.5.5"
   },
   "devDependencies": {
