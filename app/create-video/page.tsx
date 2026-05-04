@@ -1,5 +1,6 @@
 "use client";
 
+import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Captions, Check, Loader2, Mic, Music, Sparkles, Video, Wand2 } from "lucide-react";
@@ -184,6 +185,7 @@ export default function CreateVideoPage() {
                 </div>
 
                 {script && (
+                 <SubtitleGenerator script={script} />
                   <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                     <div className="flex items-center justify-between gap-4 mb-4">
                       <div>
