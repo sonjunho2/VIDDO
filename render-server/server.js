@@ -15,9 +15,7 @@ app.use(cors({
 }));
 
 app.options("*", cors());
-
 app.use(express.json({ limit: "10mb" }));
-
 app.use("/renders", express.static(path.join(process.cwd(), "renders")));
 
 app.get("/health", (req, res) => {
@@ -73,6 +71,28 @@ app.post("/render", async (req, res) => {
     return res.status(500).json({
       error: "render failed",
       details: error?.message || "unknown error"
+    });
+  }
+});
+
+app.post("/final-render", async (req, res) => {
+  try {
+    const { script, audioUrl, subtitles, previewUrl } = req.body;
+
+    return res.json({
+      success: true,
+      status: "final-render-pipeline-connected",
+      received: {
+        hasScript: Boolean(script),
+        hasAudio: Boolean(audioUrl),
+        subtitleCount: Array.isArray(subtitles) ? subtitles.length : 0,
+        hasPreview: Boolean(previewUrl)
+      },
+      finalVideoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "final render failed"
     });
   }
 });
