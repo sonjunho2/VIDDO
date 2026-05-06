@@ -30,22 +30,31 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
     setPreviewUrl("");
 
     try {
-      const res = await fetch("https://viddo-yqkt.onrender.com/render", {
+      const res = await fetch("/api/generate-scene-images", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ script, audioUrl, subtitles: [], platform, length })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          script,
+          platform,
+          length
+        })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Preview render failed.");
+        throw new Error(data.error || "AI image generation failed");
       }
 
-      const fullUrl = `https://viddo-yqkt.onrender.com${data.previewUrl || data.imageUrl}`;
-      setPreviewUrl(fullUrl);
+      if (!data.imageBase64) {
+        throw new Error("No image returned from AI");
+      }
+
+      setPreviewUrl(`data:image/png;base64,${data.imageBase64}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Preview render failed.");
+      setError(err instanceof Error ? err.message : "Preview generation failed");
     } finally {
       setLoading(false);
     }
@@ -54,10 +63,34 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
   async function handleFinalRender() {
     setFinalLoading(true);
 
-    setTimeout(() => {
-      setFinalVideoUrl("https://www.w3schools.com/html/mov_bbb.mp4");
+    try {
+      const res = await fetch("https://viddo-yqkt.onrender.com/final-render", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          script,
+          audioUrl,
+          subtitles: [],
+          previewUrl,
+          platform,
+          length
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Final render failed");
+      }
+
+      setFinalVideoUrl(data.finalVideoUrl || "https://www.w3schools.com/html/mov_bbb.mp4");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Final render failed");
+    } finally {
       setFinalLoading(false);
-    }, 3000);
+    }
   }
 
   return (
@@ -66,10 +99,10 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-xl font-black flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-300" /> Scene Preview Generation
+              <ImageIcon className="w-5 h-5 text-blue-300" /> AI Scene Preview Generation
             </h3>
             <p className="text-sm text-zinc-400 mt-1">
-              Generate preview scenes before the final AI video render.
+              Generate cinematic AI scenes for your short-form video.
             </p>
           </div>
 
@@ -80,7 +113,7 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating AI Scene...
               </>
             ) : (
               <>
@@ -98,11 +131,15 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
 
         {previewUrl && (
           <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
-            <p className="text-sm text-zinc-400 mb-3">Generated Scene Preview</p>
-            <img src={previewUrl} alt="Generated Preview" className="w-full rounded-xl mb-4" />
+            <p className="text-sm text-zinc-400 mb-3">AI Generated Scene Preview</p>
+            <img
+              src={previewUrl}
+              alt="Generated Preview"
+              className="w-full rounded-xl mb-4 object-cover"
+            />
             <a
               href={previewUrl}
-              download
+              download="viddo-scene-preview.png"
               className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 underline"
             >
               <Download className="w-4 h-4" /> Download Preview
@@ -118,7 +155,7 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
               <Sparkles className="w-5 h-5 text-violet-300" /> Final AI Video Render
             </h3>
             <p className="text-sm text-zinc-400 mt-1">
-              Combine voice, subtitles, scenes, and AI video rendering into one final MP4.
+              Combine AI scenes, voice, subtitles, and motion into one final MP4.
             </p>
           </div>
 
@@ -141,7 +178,7 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
 
         {!previewUrl && (
           <div className="text-sm text-amber-200 border border-amber-500/20 bg-amber-500/10 rounded-xl p-3">
-            Generate a preview image first before creating the final AI video.
+            Generate AI preview scenes first before creating the final video.
           </div>
         )}
 
