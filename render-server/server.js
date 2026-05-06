@@ -32,7 +32,7 @@ app.post("/render", async (req, res) => {
     }
 
     const bundled = await bundle({
-      entryPoint: path.resolve("./remotion-entry.jsx")
+      entryPoint: path.join(process.cwd(), "remotion-entry.jsx")
     });
 
     const composition = await selectComposition({
@@ -51,6 +51,7 @@ app.post("/render", async (req, res) => {
       serveUrl: bundled,
       codec: "h264",
       outputLocation,
+      timeoutInMilliseconds: 120000,
       inputProps: {
         text: script
       }
