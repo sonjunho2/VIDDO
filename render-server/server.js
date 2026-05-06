@@ -3,7 +3,7 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
+import { renderStill, selectComposition } from "@remotion/renderer";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -51,15 +51,13 @@ app.post("/render", async (req, res) => {
       }
     });
 
-    const fileName = `video-${Date.now()}.mp4`;
+    const fileName = `preview-${Date.now()}.png`;
     const outputLocation = path.join(rendersDir, fileName);
 
-    await renderMedia({
+    await renderStill({
       composition,
       serveUrl: bundled,
-      codec: "h264",
-      outputLocation,
-      timeoutInMilliseconds: 120000,
+      output: outputLocation,
       inputProps: {
         text: script
       }
@@ -67,8 +65,8 @@ app.post("/render", async (req, res) => {
 
     return res.json({
       success: true,
-      videoUrl: `/renders/${fileName}`,
-      downloadUrl: `/renders/${fileName}`
+      imageUrl: `/renders/${fileName}`,
+      previewUrl: `/renders/${fileName}`
     });
   } catch (error) {
     console.error(error);
