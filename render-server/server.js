@@ -8,7 +8,14 @@ import { renderMedia, selectComposition } from "@remotion/renderer";
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
+
+app.options("*", cors());
+
 app.use(express.json({ limit: "10mb" }));
 
 app.use("/renders", express.static(path.join(process.cwd(), "renders")));
@@ -38,6 +45,7 @@ app.post("/render", async (req, res) => {
     const composition = await selectComposition({
       serveUrl: bundled,
       id: "VideoComposition",
+      timeoutInMilliseconds: 120000,
       inputProps: {
         text: script
       }
