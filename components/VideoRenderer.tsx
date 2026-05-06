@@ -28,7 +28,7 @@ export default function VideoRenderer({ script, audioUrl, platform, length }: Pr
     setVideoUrl("");
 
     try {
-      const res = await fetch("/api/render-video", {
+      const res = await fetch("https://viddo-yqkt.onrender.com/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ script, audioUrl, subtitles: [], platform, length })
