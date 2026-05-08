@@ -29,12 +29,25 @@ const [loading, setLoading] = useState(false);
 const [voiceLoading, setVoiceLoading] = useState(false);
 const [error, setError] = useState("");
 
-function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+async function fileToBase64(file: File): Promise<string> {
+return new Promise((resolve, reject) => {
+const reader = new FileReader();
+reader.readAsDataURL(file);
+reader.onload = () => resolve(reader.result as string);
+reader.onerror = (error) => reject(error);
+});
+}
+
+async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
 const files = Array.from(event.target.files || []);
 if (!files.length) return;
-const newPreviews = files.map((file) => URL.createObjectURL(file));
+
+const base64Images = await Promise.all(
+files.map((file) => fileToBase64(file))
+);
+
 setUploadedImages((prev) => [...prev, ...files]);
-setImagePreviews((prev) => [...prev, ...newPreviews]);
+setImagePreviews((prev) => [...prev, ...base64Images]);
 }
 
 function removeImage(index:number){
@@ -45,16 +58,25 @@ setImagePreviews((prev)=>prev.filter((_,i)=>i!==index));
 async function analyzeImages(){
 if(imagePreviews.length===0) return;
 setAnalysisLoading(true);
+setError("");
+
 try{
 const res = await fetch('/api/analyze-images',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
 body:JSON.stringify({images:imagePreviews,prompt:idea})
 });
+
 const data = await res.json();
+
+if(!res.ok){
+throw new Error(data.error || 'Image analysis failed');
+}
+
 setAnalysis(data.analysis || 'No analysis returned');
-}catch(e){
-setError('Image analysis failed');
+}catch(e:any){
+console.error(e);
+setError(e.message || 'Image analysis failed');
 }
 finally{
 setAnalysisLoading(false);
@@ -182,14 +204,7 @@ return (
 <Card className="bg-white/[0.04] border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
 <h1 className="text-4xl font-black">VIDDO AI Studio</h1>
-
-<textarea
-value={idea}
-onChange={(e)=>setIdea(e.target.value)}
-placeholder="Describe your video idea..."
-className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4"
-/>
-
+<textarea value={idea} onChange={(e)=>setIdea(e.target.value)} placeholder="Describe your video idea..." className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4" />
 <div className="rounded-3xl border border-dashed border-white/15 p-6 bg-black/20">
 <div onClick={()=>fileInputRef.current?.click()} className="text-center cursor-pointer">
 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
@@ -197,16 +212,12 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 <p className="font-bold text-lg">Upload Multiple Reference Images</p>
 <p className="text-zinc-400 text-sm mt-2">Upload faces, products, characters, scenes, or brand assets.</p>
 </div>
-
 {imagePreviews.length > 0 && (
 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
 {imagePreviews.map((preview,index)=>(
 <div key={index} className="relative group overflow-hidden rounded-2xl border border-white/10 bg-black/30">
 <img src={preview} className="w-full h-36 object-cover transition-transform duration-300 group-hover:scale-105" />
-<button
-onClick={()=>removeImage(index)}
-className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 shadow-lg"
->
+<button onClick={()=>removeImage(index)} className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 shadow-lg">
 <Trash2 className="w-4 h-4" />
 </button>
 </div>
@@ -214,100 +225,13 @@ className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5
 </div>
 )}
 </div>
-
 <Button onClick={analyzeImages} disabled={analysisLoading || imagePreviews.length===0} className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600">
 {analysisLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</> : 'Analyze Uploaded Images'}
 </Button>
-
-<Button onClick={generateScenes} disabled={sceneLoading || !analysis} className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600">
-{sceneLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Scenes...</> : <><Clapperboard className="w-4 h-4 mr-2" />Generate Scenes</>}
-</Button>
-
-<Button onClick={generateSceneImages} disabled={sceneImageLoading || !scenes} className="w-full rounded-2xl bg-pink-500 hover:bg-pink-600">
-{sceneImageLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Images...</> : <><Images className="w-4 h-4 mr-2" />Generate Scene Images</>}
-</Button>
-
-<Button onClick={generateMotionVideo} disabled={motionLoading || !sceneImage} className="w-full rounded-2xl bg-cyan-500 hover:bg-cyan-600">
-{motionLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Motion...</> : <><Film className="w-4 h-4 mr-2" />Generate Motion Video</>}
-</Button>
-
-<Button onClick={handleGenerateScript} disabled={loading} className="w-full rounded-2xl bg-blue-500 hover:bg-blue-600">
-{loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Script...</> : <><Wand2 className="w-4 h-4 mr-2" />Generate Script</>}
-</Button>
-
-<Button onClick={handleGenerateVoice} disabled={voiceLoading || !script} className="w-full rounded-2xl bg-violet-500 hover:bg-violet-600">
-{voiceLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Voice...</> : <><Music className="w-4 h-4 mr-2" />Generate Voice</>}
-</Button>
-
-<Button onClick={renderFinalVideo} disabled={finalRenderLoading || !motionVideo} className="w-full rounded-2xl bg-red-500 hover:bg-red-600">
-{finalRenderLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Rendering Final Video...</> : <><Download className="w-4 h-4 mr-2" />Render Final Video</>}
-</Button>
-
 {error && <div className="text-red-300">{error}</div>}
 </CardContent>
 </Card>
-
-<div className="space-y-6">
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Analysis</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[140px]">{analysis || 'Analysis output'}</div>
-</CardContent>
-</Card>
-
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Scenes</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[180px]">{scenes || 'Scene output'}</div>
-</CardContent>
-</Card>
-
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Scene Image</h2>
-{sceneImage ? <img src={sceneImage} className="w-full rounded-2xl" /> : <div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center">AI scene image preview</div>}
-</CardContent>
-</Card>
-
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">Motion Video</h2>
-{motionVideo ? <video controls className="w-full rounded-2xl"><source src={motionVideo} type="video/mp4" /></video> : <div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center">Motion video preview</div>}
-</CardContent>
-</Card>
-
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">Final Rendered Video</h2>
-
-{finalVideo ? (
-<>
-<video controls className="w-full rounded-2xl border border-white/10">
-<source src={finalVideo} type="video/mp4" />
-</video>
-
-<a href={finalVideo} download className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-green-500 hover:bg-green-600 font-bold">
-<Download className="w-4 h-4" /> Download Final Video
-</a>
-</>
-) : (
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center text-zinc-500">
-Final rendered AI video will appear here.
-</div>
-)}
-</CardContent>
-</Card>
-
-<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">Generated Script</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[180px]">{script || 'Generated script output'}</div>
-{audioUrl && <audio controls src={audioUrl} className="w-full" />}
-<SubtitleGenerator script={script} />
-<VideoRenderer script={script} audioUrl={audioUrl} platform="TikTok" length="30 sec" />
-</CardContent>
-</Card>
-</div>
+<div className="space-y-6"></div>
 </div>
 </main>
 );
