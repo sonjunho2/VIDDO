@@ -15,18 +15,23 @@ export async function POST(req: Request) {
     if (!images.length) {
       return NextResponse.json(
         {
-          error: "No images uploaded"
+          error: "No images uploaded",
         },
         {
-          status: 400
+          status: 400,
         }
       );
     }
 
-    const content: any[] = [
-      {
-        type: "input_text",
-        text: `Analyze these uploaded reference images for AI video generation.
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze these uploaded reference images for AI video generation.
 
 User Prompt:
 ${prompt}
@@ -42,40 +47,33 @@ Return:
 8. Suggested cinematic scenes
 9. Social media video direction
 
-Make the response optimized for AI cinematic video generation.`
-      }
-    ];
-
-    images.forEach((image: string) => {
-      content.push({
-        type: "input_image",
-        image_url: image
-      });
-    });
-
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "user",
-          content
-        }
-      ]
+Make the response optimized for AI cinematic video generation.`,
+            },
+            ...images.map((image: string) => ({
+              type: "image_url",
+              image_url: {
+                url: image,
+              },
+            })),
+          ],
+        },
+      ],
     });
 
     return NextResponse.json({
       success: true,
-      analysis: response.output_text
+      analysis:
+        response.choices?.[0]?.message?.content || "No analysis",
     });
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       {
-        error: "Image analysis failed"
+        error: "Image analysis failed",
       },
       {
-        status: 500
+        status: 500,
       }
     );
   }
