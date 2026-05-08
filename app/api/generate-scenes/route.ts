@@ -50,14 +50,19 @@ For each scene include:
 Optimize for viral short-form content.
 `;
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: prompt,
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
     });
 
     return NextResponse.json({
       success: true,
-      scenes: response.output_text,
+      scenes: response.choices?.[0]?.message?.content || "No scenes generated",
     });
   } catch (error) {
     console.error(error);
