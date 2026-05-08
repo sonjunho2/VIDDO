@@ -3,7 +3,7 @@
 import VideoRenderer from "@/components/VideoRenderer";
 import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images, Film, Download } from "lucide-react";
+import { ImagePlus, Loader2, Music, Trash2, Wand2, Clapperboard, Images, Film, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -127,11 +127,7 @@ try{
 const res = await fetch('/api/render-final-video',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-motionVideo,
-audioUrl,
-subtitles:script
-})
+body:JSON.stringify({motionVideo,audioUrl,subtitles:script,sceneImage})
 });
 
 const data = await res.json();
@@ -186,26 +182,38 @@ return (
 <Card className="bg-white/[0.04] border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
 <h1 className="text-4xl font-black">VIDDO AI Studio</h1>
-<textarea value={idea} onChange={(e)=>setIdea(e.target.value)} placeholder="Describe your video idea..." className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4" />
 
-<div onClick={()=>fileInputRef.current?.click()} className="rounded-3xl border border-dashed border-white/15 p-6 text-center cursor-pointer">
+<textarea
+value={idea}
+onChange={(e)=>setIdea(e.target.value)}
+placeholder="Describe your video idea..."
+className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4"
+/>
+
+<div className="rounded-3xl border border-dashed border-white/15 p-6 bg-black/20">
+<div onClick={()=>fileInputRef.current?.click()} className="text-center cursor-pointer">
 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
 <ImagePlus className="w-10 h-10 mx-auto mb-3 text-blue-300" />
-<p className="font-bold">Upload Multiple Images</p>
+<p className="font-bold text-lg">Upload Multiple Reference Images</p>
+<p className="text-zinc-400 text-sm mt-2">Upload faces, products, characters, scenes, or brand assets.</p>
 </div>
 
 {imagePreviews.length > 0 && (
-<div className="grid grid-cols-3 gap-3">
+<div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
 {imagePreviews.map((preview,index)=>(
-<div key={index} className="relative">
-<img src={preview} className="w-full h-32 object-cover rounded-xl" />
-<button onClick={()=>removeImage(index)} className="absolute top-2 right-2 bg-red-500 rounded-full p-1">
+<div key={index} className="relative group overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+<img src={preview} className="w-full h-36 object-cover transition-transform duration-300 group-hover:scale-105" />
+<button
+onClick={()=>removeImage(index)}
+className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 shadow-lg"
+>
 <Trash2 className="w-4 h-4" />
 </button>
 </div>
 ))}
 </div>
 )}
+</div>
 
 <Button onClick={analyzeImages} disabled={analysisLoading || imagePreviews.length===0} className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600">
 {analysisLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</> : 'Analyze Uploaded Images'}
