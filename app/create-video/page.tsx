@@ -3,7 +3,7 @@
 import VideoRenderer from "@/components/VideoRenderer";
 import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard } from "lucide-react";
+import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -17,8 +17,10 @@ const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 const [analysis, setAnalysis] = useState("");
 const [scenes, setScenes] = useState("");
+const [sceneImage, setSceneImage] = useState("");
 const [analysisLoading, setAnalysisLoading] = useState(false);
 const [sceneLoading, setSceneLoading] = useState(false);
+const [sceneImageLoading, setSceneImageLoading] = useState(false);
 const [loading, setLoading] = useState(false);
 const [voiceLoading, setVoiceLoading] = useState(false);
 const [error, setError] = useState("");
@@ -80,6 +82,29 @@ setSceneLoading(false);
 }
 }
 
+async function generateSceneImages(){
+if(!scenes) return;
+setSceneImageLoading(true);
+try{
+const res = await fetch('/api/generate-scene-images-batch',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({scenes})
+});
+
+const data = await res.json();
+
+if(data.imageBase64){
+setSceneImage(`data:image/png;base64,${data.imageBase64}`);
+}
+}catch(e){
+setError('Scene image generation failed');
+}
+finally{
+setSceneImageLoading(false);
+}
+}
+
 async function handleGenerateScript(){
 setLoading(true);
 try{
@@ -123,13 +148,13 @@ return (
 <CardContent className="p-6 space-y-5">
 <div>
 <h1 className="text-4xl font-black mb-2">VIDDO AI Studio</h1>
-<p className="text-zinc-400">AI video creation using prompts and uploaded images.</p>
+<p className="text-zinc-400">AI cinematic video generation pipeline.</p>
 </div>
 
 <textarea
 value={idea}
 onChange={(e)=>setIdea(e.target.value)}
-placeholder="Describe your video idea..."
+placeholder="Describe your AI video idea..."
 className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4"
 />
 
@@ -162,6 +187,10 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 {sceneLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Scenes...</> : <><Clapperboard className="w-4 h-4 mr-2" />Generate Cinematic Scenes</>}
 </Button>
 
+<Button onClick={generateSceneImages} disabled={sceneImageLoading || !scenes} className="w-full rounded-2xl bg-pink-500 hover:bg-pink-600">
+{sceneImageLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating AI Scene Images...</> : <><Images className="w-4 h-4 mr-2" />Generate AI Scene Images</>}
+</Button>
+
 <Button onClick={handleGenerateScript} disabled={loading} className="w-full rounded-2xl bg-blue-500 hover:bg-blue-600">
 {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Script...</> : <><Wand2 className="w-4 h-4 mr-2" />Generate Script</>}
 </Button>
@@ -186,6 +215,20 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 <div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[260px] text-zinc-300">
 {scenes || 'Generated cinematic scenes will appear here.'}
 </div>
+</CardContent>
+</Card>
+
+<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
+<CardContent className="p-6 space-y-4">
+<h2 className="text-2xl font-black">AI Scene Preview</h2>
+
+{sceneImage ? (
+<img src={sceneImage} className="w-full rounded-2xl border border-white/10" />
+) : (
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[260px] flex items-center justify-center text-zinc-500">
+AI generated cinematic scene images will appear here.
+</div>
+)}
 </CardContent>
 </Card>
 
