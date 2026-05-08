@@ -23,30 +23,26 @@ export default function CreateVideoPage() {
   const [platform, setPlatform] = useState("TikTok");
   const [script, setScript] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [voiceLoading, setVoiceLoading] = useState(false);
 
   function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
 
-    if (!file) return;
+    if (!files.length) return;
 
-    setUploadedImage(file);
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
 
-    const imageUrl = URL.createObjectURL(file);
-    setImagePreview(imageUrl);
+    setUploadedImages((prev) => [...prev, ...files]);
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
   }
 
-  function removeImage() {
-    setUploadedImage(null);
-    setImagePreview("");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  function removeImage(index: number) {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleGenerateScript() {
@@ -62,8 +58,8 @@ export default function CreateVideoPage() {
     setLoading(true);
 
     try {
-      const enhancedIdea = uploadedImage
-        ? `${idea}\n\nReference Image Attached: Generate the video based on the uploaded image while maintaining visual consistency.`
+      const enhancedIdea = uploadedImages.length > 0
+        ? `${idea}\n\nReference Images Attached: Generate the video based on uploaded images while maintaining character, product, and visual consistency.`
         : idea;
 
       const res = await fetch("/api/generate-script", {
@@ -148,11 +144,11 @@ export default function CreateVideoPage() {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-            Create AI videos from text or images
+            Create AI videos from text or multiple images
           </h1>
 
           <p className="text-zinc-400 text-lg max-w-3xl">
-            Generate viral short-form or long-form AI videos using natural language prompts. Optionally upload your own image to create videos based on your brand, face, product, or character.
+            Generate viral short-form or long-form AI videos using natural language prompts. Optionally upload multiple images to create consistent scenes, characters, brands, and products.
           </p>
         </section>
 
@@ -175,69 +171,64 @@ export default function CreateVideoPage() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-bold text-zinc-300">
-                    2. Upload reference image (Optional)
+                    2. Upload reference images (Optional)
                   </label>
 
-                  {uploadedImage && (
-                    <button
-                      onClick={removeImage}
-                      className="text-xs text-red-300 hover:text-red-200 inline-flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3 h-3" /> Remove
-                    </button>
-                  )}
+                  <div className="text-xs text-zinc-500">
+                    {uploadedImages.length} image(s) uploaded
+                  </div>
                 </div>
 
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="cursor-pointer rounded-3xl border border-dashed border-white/15 bg-black/20 hover:bg-white/[0.04] transition p-6 text-center"
+                  className="cursor-pointer rounded-3xl border border-dashed border-white/15 bg-black/20 hover:bg-white/[0.04] transition p-6 text-center mb-4"
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageUpload}
                     className="hidden"
                   />
 
-                  {!imagePreview ? (
-                    <>
-                      <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                        <ImagePlus className="w-8 h-8 text-blue-300" />
-                      </div>
+                  <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                    <ImagePlus className="w-8 h-8 text-blue-300" />
+                  </div>
 
-                      <h3 className="text-lg font-black mb-2">
-                        Upload Image Reference
-                      </h3>
+                  <h3 className="text-lg font-black mb-2">
+                    Upload Multiple Reference Images
+                  </h3>
 
-                      <p className="text-sm text-zinc-400 max-w-md mx-auto mb-4">
-                        Upload your product, face, brand, or character image. VIDDO will create scenes and videos based on your uploaded image.
-                      </p>
+                  <p className="text-sm text-zinc-400 max-w-md mx-auto mb-4">
+                    Upload faces, products, characters, scenes, or brand assets. VIDDO will use them to maintain consistency across generated videos.
+                  </p>
 
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-500 text-white font-bold text-sm">
-                        <Upload className="w-4 h-4" /> Choose Image
-                      </div>
-                    </>
-                  ) : (
-                    <div>
-                      <img
-                        src={imagePreview}
-                        alt="Uploaded preview"
-                        className="w-full max-h-[320px] object-cover rounded-2xl mb-4"
-                      />
-
-                      <div className="text-left">
-                        <div className="text-sm text-zinc-300 font-bold mb-1">
-                          Reference image connected
-                        </div>
-
-                        <div className="text-xs text-zinc-500">
-                          VIDDO will generate scenes and AI videos based on this uploaded image.
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-500 text-white font-bold text-sm">
+                    <Upload className="w-4 h-4" /> Add Images
+                  </div>
                 </div>
+
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group rounded-2xl overflow-hidden border border-white/10 bg-black/20">
+                        <img
+                          src={preview}
+                          alt={`Reference ${index + 1}`}
+                          className="w-full h-40 object-cover"
+                        />
+
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <Trash2 className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mb-6">
@@ -378,34 +369,6 @@ export default function CreateVideoPage() {
                     />
                   </>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/[0.04] border-white/10 rounded-3xl">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-black mb-4">VIDDO AI Pipeline</h3>
-
-                <div className="space-y-3 text-zinc-300">
-                  <div className="flex items-center gap-3">
-                    <Check className="w-4 h-4 text-blue-300" /> Script generation connected
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Check className="w-4 h-4 text-blue-300" /> Optional image reference system connected
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Mic className="w-4 h-4 text-blue-300" /> Voice generation connected
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Captions className="w-4 h-4 text-blue-300" /> Subtitle generation connected
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <ImagePlus className="w-4 h-4 text-blue-300" /> AI scene preview generation connected
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
