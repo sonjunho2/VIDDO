@@ -3,7 +3,7 @@
 import VideoRenderer from "@/components/VideoRenderer";
 import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images, Film } from "lucide-react";
+import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images, Film, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -19,10 +19,12 @@ const [analysis, setAnalysis] = useState("");
 const [scenes, setScenes] = useState("");
 const [sceneImage, setSceneImage] = useState("");
 const [motionVideo, setMotionVideo] = useState("");
+const [finalVideo, setFinalVideo] = useState("");
 const [analysisLoading, setAnalysisLoading] = useState(false);
 const [sceneLoading, setSceneLoading] = useState(false);
 const [sceneImageLoading, setSceneImageLoading] = useState(false);
 const [motionLoading, setMotionLoading] = useState(false);
+const [finalRenderLoading, setFinalRenderLoading] = useState(false);
 const [loading, setLoading] = useState(false);
 const [voiceLoading, setVoiceLoading] = useState(false);
 const [error, setError] = useState("");
@@ -66,14 +68,8 @@ try{
 const res = await fetch('/api/generate-scenes',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-idea,
-analysis,
-platform:'TikTok',
-length:'30 sec'
-})
+body:JSON.stringify({idea,analysis,platform:'TikTok',length:'30 sec'})
 });
-
 const data = await res.json();
 setScenes(data.scenes || 'No scenes generated');
 }catch(e){
@@ -93,9 +89,7 @@ method:'POST',
 headers:{'Content-Type':'application/json'},
 body:JSON.stringify({scenes})
 });
-
 const data = await res.json();
-
 if(data.imageBase64){
 setSceneImage(`data:image/png;base64,${data.imageBase64}`);
 }
@@ -114,12 +108,8 @@ try{
 const res = await fetch('/api/generate-motion-video',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-image:sceneImage,
-prompt:scenes
-})
+body:JSON.stringify({image:sceneImage,prompt:scenes})
 });
-
 const data = await res.json();
 setMotionVideo(data.previewVideo || '');
 }catch(e){
@@ -127,6 +117,30 @@ setError('Motion video generation failed');
 }
 finally{
 setMotionLoading(false);
+}
+}
+
+async function renderFinalVideo(){
+if(!motionVideo) return;
+setFinalRenderLoading(true);
+try{
+const res = await fetch('/api/render-final-video',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+motionVideo,
+audioUrl,
+subtitles:script
+})
+});
+
+const data = await res.json();
+setFinalVideo(data.finalVideo || '');
+}catch(e){
+setError('Final render failed');
+}
+finally{
+setFinalRenderLoading(false);
 }
 }
 
@@ -170,20 +184,10 @@ return (
 <main className="min-h-screen bg-[#070A12] text-white p-6">
 <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6">
 <Card className="bg-white/[0.04] border-white/10 rounded-3xl">
-<CardContent className="p-6 space-y-5">
-<div>
-<h1 className="text-4xl font-black mb-2">VIDDO AI Studio</h1>
-<p className="text-zinc-400">AI cinematic video generation pipeline.</p>
-</div>
+<CardContent className="p-6 space-y-4">
+<h1 className="text-4xl font-black">VIDDO AI Studio</h1>
+<textarea value={idea} onChange={(e)=>setIdea(e.target.value)} placeholder="Describe your video idea..." className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4" />
 
-<textarea
-value={idea}
-onChange={(e)=>setIdea(e.target.value)}
-placeholder="Describe your AI video idea..."
-className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p-4"
-/>
-
-<div>
 <div onClick={()=>fileInputRef.current?.click()} className="rounded-3xl border border-dashed border-white/15 p-6 text-center cursor-pointer">
 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
 <ImagePlus className="w-10 h-10 mx-auto mb-3 text-blue-300" />
@@ -191,7 +195,7 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 </div>
 
 {imagePreviews.length > 0 && (
-<div className="grid grid-cols-3 gap-3 mt-4">
+<div className="grid grid-cols-3 gap-3">
 {imagePreviews.map((preview,index)=>(
 <div key={index} className="relative">
 <img src={preview} className="w-full h-32 object-cover rounded-xl" />
@@ -202,76 +206,85 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 ))}
 </div>
 )}
-</div>
 
 <Button onClick={analyzeImages} disabled={analysisLoading || imagePreviews.length===0} className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600">
-{analysisLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing Images...</> : 'Analyze Uploaded Images'}
+{analysisLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</> : 'Analyze Uploaded Images'}
 </Button>
 
 <Button onClick={generateScenes} disabled={sceneLoading || !analysis} className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600">
-{sceneLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Scenes...</> : <><Clapperboard className="w-4 h-4 mr-2" />Generate Cinematic Scenes</>}
+{sceneLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Scenes...</> : <><Clapperboard className="w-4 h-4 mr-2" />Generate Scenes</>}
 </Button>
 
 <Button onClick={generateSceneImages} disabled={sceneImageLoading || !scenes} className="w-full rounded-2xl bg-pink-500 hover:bg-pink-600">
-{sceneImageLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating AI Scene Images...</> : <><Images className="w-4 h-4 mr-2" />Generate AI Scene Images</>}
+{sceneImageLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Images...</> : <><Images className="w-4 h-4 mr-2" />Generate Scene Images</>}
 </Button>
 
 <Button onClick={generateMotionVideo} disabled={motionLoading || !sceneImage} className="w-full rounded-2xl bg-cyan-500 hover:bg-cyan-600">
-{motionLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Motion Video...</> : <><Film className="w-4 h-4 mr-2" />Generate Motion Video</>}
+{motionLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Motion...</> : <><Film className="w-4 h-4 mr-2" />Generate Motion Video</>}
 </Button>
 
 <Button onClick={handleGenerateScript} disabled={loading} className="w-full rounded-2xl bg-blue-500 hover:bg-blue-600">
 {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Script...</> : <><Wand2 className="w-4 h-4 mr-2" />Generate Script</>}
 </Button>
 
-{error && <div className="text-red-300 text-sm">{error}</div>}
+<Button onClick={handleGenerateVoice} disabled={voiceLoading || !script} className="w-full rounded-2xl bg-violet-500 hover:bg-violet-600">
+{voiceLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Voice...</> : <><Music className="w-4 h-4 mr-2" />Generate Voice</>}
+</Button>
+
+<Button onClick={renderFinalVideo} disabled={finalRenderLoading || !motionVideo} className="w-full rounded-2xl bg-red-500 hover:bg-red-600">
+{finalRenderLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Rendering Final Video...</> : <><Download className="w-4 h-4 mr-2" />Render Final Video</>}
+</Button>
+
+{error && <div className="text-red-300">{error}</div>}
 </CardContent>
 </Card>
 
 <div className="space-y-6">
 <Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Image Analysis</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[180px] text-zinc-300">
-{analysis || 'Uploaded image analysis will appear here.'}
-</div>
+<h2 className="text-2xl font-black">AI Analysis</h2>
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[140px]">{analysis || 'Analysis output'}</div>
 </CardContent>
 </Card>
 
 <Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Cinematic Scenes</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[260px] text-zinc-300">
-{scenes || 'Generated cinematic scenes will appear here.'}
-</div>
+<h2 className="text-2xl font-black">AI Scenes</h2>
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[180px]">{scenes || 'Scene output'}</div>
 </CardContent>
 </Card>
 
 <Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">AI Scene Preview</h2>
-
-{sceneImage ? (
-<img src={sceneImage} className="w-full rounded-2xl border border-white/10" />
-) : (
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[260px] flex items-center justify-center text-zinc-500">
-AI generated cinematic scene images will appear here.
-</div>
-)}
+<h2 className="text-2xl font-black">AI Scene Image</h2>
+{sceneImage ? <img src={sceneImage} className="w-full rounded-2xl" /> : <div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center">AI scene image preview</div>}
 </CardContent>
 </Card>
 
 <Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
-<h2 className="text-2xl font-black">Motion Video Preview</h2>
+<h2 className="text-2xl font-black">Motion Video</h2>
+{motionVideo ? <video controls className="w-full rounded-2xl"><source src={motionVideo} type="video/mp4" /></video> : <div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center">Motion video preview</div>}
+</CardContent>
+</Card>
 
-{motionVideo ? (
+<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
+<CardContent className="p-6 space-y-4">
+<h2 className="text-2xl font-black">Final Rendered Video</h2>
+
+{finalVideo ? (
+<>
 <video controls className="w-full rounded-2xl border border-white/10">
-<source src={motionVideo} type="video/mp4" />
+<source src={finalVideo} type="video/mp4" />
 </video>
+
+<a href={finalVideo} download className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-green-500 hover:bg-green-600 font-bold">
+<Download className="w-4 h-4" /> Download Final Video
+</a>
+</>
 ) : (
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[260px] flex items-center justify-center text-zinc-500">
-AI motion video preview will appear here.
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[240px] flex items-center justify-center text-zinc-500">
+Final rendered AI video will appear here.
 </div>
 )}
 </CardContent>
@@ -280,18 +293,9 @@ AI motion video preview will appear here.
 <Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
 <CardContent className="p-6 space-y-4">
 <h2 className="text-2xl font-black">Generated Script</h2>
-<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[220px] text-zinc-300">
-{script || 'Generated script will appear here.'}
-</div>
-
-<Button onClick={handleGenerateVoice} disabled={voiceLoading || !script} className="rounded-2xl bg-violet-500 hover:bg-violet-600">
-{voiceLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Voice...</> : <><Music className="w-4 h-4 mr-2" />Generate Voice</>}
-</Button>
-
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 whitespace-pre-wrap min-h-[180px]">{script || 'Generated script output'}</div>
 {audioUrl && <audio controls src={audioUrl} className="w-full" />}
-
 <SubtitleGenerator script={script} />
-
 <VideoRenderer script={script} audioUrl={audioUrl} platform="TikTok" length="30 sec" />
 </CardContent>
 </Card>
