@@ -3,7 +3,7 @@
 import VideoRenderer from "@/components/VideoRenderer";
 import SubtitleGenerator from "@/components/SubtitleGenerator";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images } from "lucide-react";
+import { ImagePlus, Loader2, Mic, Music, Trash2, Wand2, Clapperboard, Images, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -18,9 +18,11 @@ const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 const [analysis, setAnalysis] = useState("");
 const [scenes, setScenes] = useState("");
 const [sceneImage, setSceneImage] = useState("");
+const [motionVideo, setMotionVideo] = useState("");
 const [analysisLoading, setAnalysisLoading] = useState(false);
 const [sceneLoading, setSceneLoading] = useState(false);
 const [sceneImageLoading, setSceneImageLoading] = useState(false);
+const [motionLoading, setMotionLoading] = useState(false);
 const [loading, setLoading] = useState(false);
 const [voiceLoading, setVoiceLoading] = useState(false);
 const [error, setError] = useState("");
@@ -102,6 +104,29 @@ setError('Scene image generation failed');
 }
 finally{
 setSceneImageLoading(false);
+}
+}
+
+async function generateMotionVideo(){
+if(!sceneImage) return;
+setMotionLoading(true);
+try{
+const res = await fetch('/api/generate-motion-video',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+image:sceneImage,
+prompt:scenes
+})
+});
+
+const data = await res.json();
+setMotionVideo(data.previewVideo || '');
+}catch(e){
+setError('Motion video generation failed');
+}
+finally{
+setMotionLoading(false);
 }
 }
 
@@ -191,6 +216,10 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 {sceneImageLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating AI Scene Images...</> : <><Images className="w-4 h-4 mr-2" />Generate AI Scene Images</>}
 </Button>
 
+<Button onClick={generateMotionVideo} disabled={motionLoading || !sceneImage} className="w-full rounded-2xl bg-cyan-500 hover:bg-cyan-600">
+{motionLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Motion Video...</> : <><Film className="w-4 h-4 mr-2" />Generate Motion Video</>}
+</Button>
+
 <Button onClick={handleGenerateScript} disabled={loading} className="w-full rounded-2xl bg-blue-500 hover:bg-blue-600">
 {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Script...</> : <><Wand2 className="w-4 h-4 mr-2" />Generate Script</>}
 </Button>
@@ -227,6 +256,22 @@ className="w-full min-h-[140px] rounded-2xl bg-black/30 border border-white/10 p
 ) : (
 <div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[260px] flex items-center justify-center text-zinc-500">
 AI generated cinematic scene images will appear here.
+</div>
+)}
+</CardContent>
+</Card>
+
+<Card className="bg-[#0D1220]/90 border-white/10 rounded-3xl">
+<CardContent className="p-6 space-y-4">
+<h2 className="text-2xl font-black">Motion Video Preview</h2>
+
+{motionVideo ? (
+<video controls className="w-full rounded-2xl border border-white/10">
+<source src={motionVideo} type="video/mp4" />
+</video>
+) : (
+<div className="rounded-2xl bg-black/30 border border-white/10 p-4 min-h-[260px] flex items-center justify-center text-zinc-500">
+AI motion video preview will appear here.
 </div>
 )}
 </CardContent>
