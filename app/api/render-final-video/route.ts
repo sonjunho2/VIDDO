@@ -7,6 +7,7 @@ export async function POST(req: Request) {
     const motionVideo = body.motionVideo;
     const audioUrl = body.audioUrl;
     const subtitles = body.subtitles || "";
+    const sceneImage = body.sceneImage || "";
 
     if (!motionVideo) {
       return NextResponse.json(
@@ -19,17 +20,34 @@ export async function POST(req: Request) {
       );
     }
 
+    const renderResponse = await fetch(
+      "https://viddo-render.onrender.com/render-video",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: sceneImage,
+          audio: audioUrl,
+          subtitles,
+        }),
+      }
+    );
+
+    const renderData = await renderResponse.json();
+
     return NextResponse.json({
       success: true,
       status: "rendered",
       provider: "VIDDO Render Engine",
-      finalVideo:
-        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      finalVideo: renderData.videoUrl,
       renderInfo: {
         subtitlesIncluded: !!subtitles,
         voiceIncluded: !!audioUrl,
         aspectRatio: "9:16",
         exportType: "short-form",
+        renderServer: "https://viddo-render.onrender.com",
       },
     });
   } catch (error) {
