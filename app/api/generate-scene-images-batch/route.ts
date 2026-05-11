@@ -7,7 +7,7 @@ const client = new OpenAI({
 
 type VideoFormat = "shorts" | "longform" | "square";
 
-const FORMAT_SETTINGS: Record<VideoFormat, { label: string; aspectRatio: string; imageSize: "1024x1536" | "1536x1024" | "1024x1024"; direction: string }> = {
+const FORMAT_SETTINGS: Record<VideoFormat, { label: string; aspectRatio: string; imageSize: string; direction: string }> = {
   shorts: {
     label: "Shorts / Reels / TikTok",
     aspectRatio: "9:16",
@@ -28,7 +28,7 @@ const FORMAT_SETTINGS: Record<VideoFormat, { label: string; aspectRatio: string;
   },
 };
 
-function getFormatSettings(value: string): typeof FORMAT_SETTINGS[VideoFormat] {
+function getFormatSettings(value: string) {
   if (value === "longform") return FORMAT_SETTINGS.longform;
   if (value === "square") return FORMAT_SETTINGS.square;
   return FORMAT_SETTINGS.shorts;
@@ -74,7 +74,7 @@ Style:
 - clean composition for captions
 - professional advertising quality
 `,
-      size: settings.imageSize,
+      size: settings.imageSize as any,
     });
 
     const imageBase64 = response.data?.[0]?.b64_json;
