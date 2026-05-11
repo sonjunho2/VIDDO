@@ -13,41 +13,65 @@ export async function POST(req: Request) {
     const analysis = body.analysis || "";
     const platform = body.platform || "TikTok";
     const length = body.length || "30 sec";
+    const videoFormat = body.videoFormat || "shorts";
 
     const prompt = `
-You are an elite AI cinematic director.
+You are an elite cinematic AI video director creating a high-quality social media video production.
 
-Create short-form AI video scenes based on:
-
-User Idea:
+USER IDEA:
 ${idea}
 
-Image Analysis:
+VISUAL IDENTITY PROFILE:
 ${analysis}
 
-Platform:
+PLATFORM:
 ${platform}
 
-Video Length:
+VIDEO FORMAT:
+${videoFormat}
+
+VIDEO LENGTH:
 ${length}
 
-Generate:
+IMPORTANT CONSISTENCY RULES:
+- Keep the same character identity across all scenes.
+- Keep the same face, hairstyle, clothing, accessories, and body proportions.
+- Keep the same product design and branding.
+- Maintain cinematic continuity between scenes.
+- Maintain the same lighting style and mood identity.
+- Preserve visual storytelling continuity.
+- Optimize composition for the target platform aspect ratio.
+
+Generate this structure:
+
 1. Hook Scene
 2. Transition Scene
 3. Main Cinematic Scene
 4. Emotional Scene
 5. Ending CTA Scene
 
-For each scene include:
+For EVERY scene include:
+- Scene purpose
 - Camera angle
+- Camera movement
 - Subject movement
 - Lighting
-- Background
+- Background environment
 - Mood
 - Cinematic direction
-- AI image/video prompt
+- Transition style
+- Subtitle placement recommendation
+- AI image generation prompt
+- AI motion video prompt
 
-Optimize for viral short-form content.
+CINEMATIC REQUIREMENTS:
+- Viral short-form pacing
+- Strong hook in first 3 seconds
+- Cinematic realism
+- Professional advertising quality
+- Social media optimized framing
+- Consistent visual identity across all scenes
+- Mobile-safe subtitle spacing
 `;
 
     const response = await client.chat.completions.create({
