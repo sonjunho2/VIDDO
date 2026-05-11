@@ -13,6 +13,12 @@ export default function DashboardPage() {
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState({
+  analysis: "idle",
+  motion: "idle",
+  render: "idle",
+  save: "idle",
+});
 
   useEffect(() => {
     async function loadUser() {
@@ -29,9 +35,50 @@ export default function DashboardPage() {
 
   setIsGenerating(true);
 
+  setPipelineStatus({
+    analysis: "running",
+    motion: "idle",
+    render: "idle",
+    save: "idle",
+  });
+
   setTimeout(() => {
+    setPipelineStatus({
+      analysis: "done",
+      motion: "running",
+      render: "idle",
+      save: "idle",
+    });
+  }, 1500);
+
+  setTimeout(() => {
+    setPipelineStatus({
+      analysis: "done",
+      motion: "done",
+      render: "running",
+      save: "idle",
+    });
+  }, 3000);
+
+  setTimeout(() => {
+    setPipelineStatus({
+      analysis: "done",
+      motion: "done",
+      render: "done",
+      save: "running",
+    });
+  }, 4500);
+
+  setTimeout(() => {
+    setPipelineStatus({
+      analysis: "done",
+      motion: "done",
+      render: "done",
+      save: "done",
+    });
+
     setIsGenerating(false);
-  }, 5000);
+  }, 6000);
 }
 
   if (loading) {
