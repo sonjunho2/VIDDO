@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function DashboardPage() {
@@ -11,6 +12,7 @@ export default function DashboardPage() {
   const [videoFormat, setVideoFormat] = useState("shorts");
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     async function loadUser() {
@@ -22,6 +24,15 @@ export default function DashboardPage() {
 
     loadUser();
   }, []);
+  async function generateVideo() {
+  if (!idea.trim()) return;
+
+  setIsGenerating(true);
+
+  setTimeout(() => {
+    setIsGenerating(false);
+  }, 5000);
+}
 
   if (loading) {
     return (
@@ -130,9 +141,20 @@ export default function DashboardPage() {
 
             </div>
 
-            <button className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 py-5 text-xl font-bold">
-              Generate Video
-            </button>
+<button
+  onClick={generateVideo}
+  disabled={isGenerating}
+  className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 py-5 text-xl font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-3"
+>
+  {isGenerating ? (
+    <>
+      <Loader2 className="animate-spin w-6 h-6" />
+      Generating cinematic video...
+    </>
+  ) : (
+    "Generate Video"
+  )}
+</button>
 
           </div>
 
