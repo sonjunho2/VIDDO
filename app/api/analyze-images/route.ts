@@ -11,6 +11,7 @@ export async function POST(req: Request) {
 
     const images = body.images || [];
     const prompt = body.prompt || "";
+    const videoFormat = body.videoFormat || "shorts";
 
     if (!images.length) {
       return NextResponse.json(
@@ -36,18 +37,39 @@ export async function POST(req: Request) {
 User Prompt:
 ${prompt}
 
-Return:
-1. Character description
-2. Product description
-3. Visual style
-4. Lighting style
-5. Scene mood
-6. Clothing details
-7. Camera style
-8. Suggested cinematic scenes
-9. Social media video direction
+Video Format:
+${videoFormat}
 
-Make the response optimized for AI cinematic video generation.`,
+Return the result in this exact structure:
+
+VISUAL IDENTITY PROFILE
+- Main subject:
+- Face / body details:
+- Clothing / accessories:
+- Product / brand details:
+- Colors and materials:
+- Background environment:
+- Lighting identity:
+- Mood identity:
+- Elements that must stay consistent:
+- Elements that can change:
+
+CINEMATIC STYLE PROFILE
+- Camera style:
+- Lens feeling:
+- Movement style:
+- Lighting style:
+- Color grading:
+- Composition rules:
+
+VIDEO DIRECTION
+- Recommended hook:
+- Recommended scene flow:
+- Suggested cinematic scenes:
+- Social media direction:
+
+IMPORTANT:
+Create a reusable visual identity profile that can be inserted into every AI image and video prompt to keep the same character, product, brand, and mood consistent across all scenes.`,
             },
             ...images.map((image: string) => ({
               type: "image_url",
