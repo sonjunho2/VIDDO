@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [sceneOutput, setSceneOutput] = useState("");
+  const [error, setError] = useState("");
   const [pipelineStatus, setPipelineStatus] = useState({
     analysis: "idle",
     motion: "idle",
@@ -35,6 +37,8 @@ export default function DashboardPage() {
     if (!idea.trim()) return;
 
     setIsGenerating(true);
+    setError("");
+    setSceneOutput("");
 
     setPipelineStatus({
       analysis: "running",
@@ -43,43 +47,46 @@ export default function DashboardPage() {
       save: "idle",
     });
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/generate-scenes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idea,
+          analysis: "No uploaded reference image. Use prompt-only video direction.",
+          platform: videoFormat,
+          length,
+          videoFormat,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Scene generation failed");
+      }
+
+      setSceneOutput(data.scenes || "No scenes generated");
+
       setPipelineStatus({
         analysis: "done",
-        motion: "running",
+        motion: "ready",
         render: "idle",
         save: "idle",
       });
-    }, 1500);
-
-    setTimeout(() => {
+    } catch (e: any) {
+      setError(e.message || "Generation failed");
       setPipelineStatus({
-        analysis: "done",
-        motion: "done",
-        render: "running",
+        analysis: "error",
+        motion: "idle",
+        render: "idle",
         save: "idle",
       });
-    }, 3000);
-
-    setTimeout(() => {
-      setPipelineStatus({
-        analysis: "done",
-        motion: "done",
-        render: "done",
-        save: "running",
-      });
-    }, 4500);
-
-    setTimeout(() => {
-      setPipelineStatus({
-        analysis: "done",
-        motion: "done",
-        render: "done",
-        save: "done",
-      });
-
+    } finally {
       setIsGenerating(false);
-    }, 6000);
+    }
   }
 
   if (loading) {
@@ -189,20 +196,33 @@ export default function DashboardPage() {
 
             </div>
 
-<button
-  onClick={generateVideo}
-  disabled={isGenerating}
-  className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 py-5 text-xl font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-3"
->
-  {isGenerating ? (
-    <>
-      <Loader2 className="animate-spin w-6 h-6" />
-      Generating cinematic video...
-    </>
-  ) : (
-    "Generate Video"
-  )}
-</button>
+            <button
+              onClick={generateVideo}
+              disabled={isGenerating}
+              className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 py-5 text-xl font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="animate-spin w-6 h-6" />
+                  Generating scenes...
+                </>
+              ) : (
+                "Generate Video"
+              )}
+            </button>
+
+            {error && (
+              <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-red-200">
+                {error}
+              </div>
+            )}
+
+            {sceneOutput && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6">
+                <div className="text-zinc-400 text-sm mb-3">Generated Scene Direction</div>
+                <pre className="whitespace-pre-wrap text-sm leading-7 text-zinc-200">{sceneOutput}</pre>
+              </div>
+            )}
 
           </div>
 
