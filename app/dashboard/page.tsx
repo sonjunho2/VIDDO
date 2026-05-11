@@ -14,11 +14,11 @@ export default function DashboardPage() {
   const [voice, setVoice] = useState("Male");
   const [isGenerating, setIsGenerating] = useState(false);
   const [pipelineStatus, setPipelineStatus] = useState({
-  analysis: "idle",
-  motion: "idle",
-  render: "idle",
-  save: "idle",
-});
+    analysis: "idle",
+    motion: "idle",
+    render: "idle",
+    save: "idle",
+  });
 
   useEffect(() => {
     async function loadUser() {
@@ -30,56 +30,57 @@ export default function DashboardPage() {
 
     loadUser();
   }, []);
+
   async function generateVideo() {
-  if (!idea.trim()) return;
+    if (!idea.trim()) return;
 
-  setIsGenerating(true);
+    setIsGenerating(true);
 
-  setPipelineStatus({
-    analysis: "running",
-    motion: "idle",
-    render: "idle",
-    save: "idle",
-  });
-
-  setTimeout(() => {
     setPipelineStatus({
-      analysis: "done",
-      motion: "running",
+      analysis: "running",
+      motion: "idle",
       render: "idle",
       save: "idle",
     });
-  }, 1500);
 
-  setTimeout(() => {
-    setPipelineStatus({
-      analysis: "done",
-      motion: "done",
-      render: "running",
-      save: "idle",
-    });
-  }, 3000);
+    setTimeout(() => {
+      setPipelineStatus({
+        analysis: "done",
+        motion: "running",
+        render: "idle",
+        save: "idle",
+      });
+    }, 1500);
 
-  setTimeout(() => {
-    setPipelineStatus({
-      analysis: "done",
-      motion: "done",
-      render: "done",
-      save: "running",
-    });
-  }, 4500);
+    setTimeout(() => {
+      setPipelineStatus({
+        analysis: "done",
+        motion: "done",
+        render: "running",
+        save: "idle",
+      });
+    }, 3000);
 
-  setTimeout(() => {
-    setPipelineStatus({
-      analysis: "done",
-      motion: "done",
-      render: "done",
-      save: "done",
-    });
+    setTimeout(() => {
+      setPipelineStatus({
+        analysis: "done",
+        motion: "done",
+        render: "done",
+        save: "running",
+      });
+    }, 4500);
 
-    setIsGenerating(false);
-  }, 6000);
-}
+    setTimeout(() => {
+      setPipelineStatus({
+        analysis: "done",
+        motion: "done",
+        render: "done",
+        save: "done",
+      });
+
+      setIsGenerating(false);
+    }, 6000);
+  }
 
   if (loading) {
     return (
@@ -234,10 +235,27 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-4 text-lg">
-                <div>✓ Analysis Engine</div>
-                <div>✓ Motion Engine</div>
-                <div>✓ Render Engine</div>
-                <div>✓ Auto Save System</div>
+
+                <div className="flex items-center justify-between">
+                  <span>Analysis Engine</span>
+                  <span>{pipelineStatus.analysis}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>Motion Engine</span>
+                  <span>{pipelineStatus.motion}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>Render Engine</span>
+                  <span>{pipelineStatus.render}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>Auto Save System</span>
+                  <span>{pipelineStatus.save}</span>
+                </div>
+
               </div>
 
             </div>
