@@ -148,6 +148,11 @@ if (imageData.success && imageData.imageBase64) {
   const imageUrl = `data:image/png;base64,${imageData.imageBase64}`;
 
   setGeneratedImage(imageUrl);
+
+  await saveProject(
+  data.scenes || "",
+  imageUrl
+);
 }
 
       setPipelineStatus({
