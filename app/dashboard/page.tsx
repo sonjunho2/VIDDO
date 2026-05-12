@@ -18,13 +18,37 @@ export default function DashboardPage() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [pipelineStatus, setPipelineStatus] = useState({
-    analysis: "idle",
-    motion: "idle",
-    render: "idle",
-    save: "idle",
-  });
+  analysis: "idle",
+  motion: "idle",
+  render: "idle",
+  save: "idle",
+});
 
-  useEffect(() => {
+async function saveProject(
+  sceneText: string,
+  imageUrl: string
+) {
+  const { data: userData } =
+    await supabase.auth.getUser();
+
+  if (!userData.user) return;
+
+  await supabase
+    .from("projects")
+    .insert([
+      {
+        user_id: userData.user.id,
+        idea,
+        scene_output: sceneText,
+        generated_image: imageUrl,
+        video_format: videoFormat,
+        video_length: length,
+        voice,
+      },
+    ]);
+}
+
+useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
 
