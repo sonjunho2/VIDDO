@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [idea, setIdea] = useState("");
+  const [idea, setIdea] = useState
   const [videoFormat, setVideoFormat] = useState("shorts");
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
@@ -71,6 +71,31 @@ export default function DashboardPage() {
       }
 
       setSceneOutput(data.scenes || "No scenes generated");
+
+      const imageResponse = await fetch(
+  "/api/generate-scene-images-batch",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      scenes: [scenes],
+      settings: {
+        imageSize:
+          videoFormat === "longform"
+            ? "1536x1024"
+            : "1024x1536",
+      },
+    }),
+  }
+);
+
+const imageData = await imageResponse.json();
+
+if (imageData.images?.[0]) {
+  setGeneratedImage(imageData.images[0]);
+}
 
       setPipelineStatus({
         analysis: "done",
