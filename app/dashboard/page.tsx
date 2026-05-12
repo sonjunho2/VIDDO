@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [voice, setVoice] = useState("Male");
   const [isGenerating, setIsGenerating] = useState(false);
   const [sceneOutput, setSceneOutput] = useState("");
+  const [generatedImage, setGeneratedImage] = useState("");
   const [error, setError] = useState("");
   const [pipelineStatus, setPipelineStatus] = useState({
     analysis: "idle",
@@ -39,6 +40,7 @@ export default function DashboardPage() {
     setIsGenerating(true);
     setError("");
     setSceneOutput("");
+    setGeneratedImage("");
 
     setPipelineStatus({
       analysis: "running",
@@ -221,6 +223,16 @@ export default function DashboardPage() {
               <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6">
                 <div className="text-zinc-400 text-sm mb-3">Generated Scene Direction</div>
                 <pre className="whitespace-pre-wrap text-sm leading-7 text-zinc-200">{sceneOutput}</pre>
+              </div>
+            )}
+
+            {generatedImage && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+                <img
+                  src={generatedImage}
+                  alt="Generated Scene"
+                  className="w-full rounded-2xl object-cover"
+                />
               </div>
             )}
 
