@@ -80,7 +80,7 @@ export default function DashboardPage() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      scenes: [scenes],
+      scenes: [data.scenes],
       settings: {
         imageSize:
           videoFormat === "longform"
