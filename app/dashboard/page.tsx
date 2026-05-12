@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [idea, setIdea] = useState
+  const [idea, setIdea] = useState("");
   const [videoFormat, setVideoFormat] = useState("shorts");
   const [length, setLength] = useState("30 sec");
   const [voice, setVoice] = useState("Male");
