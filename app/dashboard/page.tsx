@@ -189,6 +189,22 @@ if (imageData.images?.[0]) {
     className="block w-full text-sm text-zinc-400"
   />
 </div>
+{uploadedImages.length > 0 && (
+  <div className="grid grid-cols-2 gap-4 mt-6">
+    {uploadedImages.map((image, index) => (
+      <div
+        key={index}
+        className="rounded-2xl overflow-hidden border border-white/10"
+      >
+        <img
+          src={image}
+          alt={`upload-${index}`}
+          className="w-full h-40 object-cover"
+        />
+      </div>
+    ))}
+  </div>
+)}
             </div>
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
