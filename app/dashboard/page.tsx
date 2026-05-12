@@ -204,11 +204,22 @@ if (imageData.images?.[0]) {
     onChange={(e) => {
       const files = Array.from(e.target.files || []);
 
-      const imageUrls = files.map((file) =>
-        URL.createObjectURL(file)
-      );
+      Promise.all(
+  files.map(
+    (file) =>
+      new Promise<string>((resolve) => {
+        const reader = new FileReader();
 
-      setUploadedImages(imageUrls);
+        reader.onloadend = () => {
+          resolve(reader.result as string);
+        };
+
+        reader.readAsDataURL(file);
+      })
+  )
+).then((base64Images) => {
+  setUploadedImages(base64Images);
+});
     }}
     className="block w-full text-sm text-zinc-400"
   />
