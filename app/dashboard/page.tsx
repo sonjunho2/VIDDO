@@ -118,8 +118,12 @@ if (uploadedImages.length > 0) {
 
 const imageData = await imageResponse.json();
 
-if (imageData.images?.[0]) {
-  setGeneratedImage(imageData.images[0]);
+console.log("IMAGE RESPONSE:", imageData);
+
+if (imageData.success && imageData.imageBase64) {
+  const imageUrl = `data:image/png;base64,${imageData.imageBase64}`;
+
+  setGeneratedImage(imageUrl);
 }
 
       setPipelineStatus({
