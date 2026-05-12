@@ -171,6 +171,24 @@ if (imageData.images?.[0]) {
                 placeholder="Describe your video idea..."
                 className="w-full h-40 rounded-2xl border border-white/10 bg-black/40 p-5 text-lg outline-none resize-none"
               />
+
+              <div className="mt-4">
+  <input
+    type="file"
+    multiple
+    accept="image/*"
+    onChange={(e) => {
+      const files = Array.from(e.target.files || []);
+
+      const imageUrls = files.map((file) =>
+        URL.createObjectURL(file)
+      );
+
+      setUploadedImages(imageUrls);
+    }}
+    className="block w-full text-sm text-zinc-400"
+  />
+</div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
