@@ -51,6 +51,28 @@ export default function DashboardPage() {
     });
 
     try {
+      let imageAnalysis = "";
+
+if (uploadedImages.length > 0) {
+  const analysisResponse = await fetch(
+    "/api/analyze-images",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        images: uploadedImages,
+      }),
+    }
+  );
+
+  const analysisData = await analysisResponse.json();
+
+  imageAnalysis =
+    analysisData.analysis ||
+    "Uploaded image analysis unavailable";
+}
       const response = await fetch("/api/generate-scenes", {
         method: "POST",
         headers: {
@@ -58,7 +80,9 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({
           idea,
-          analysis: "No uploaded reference image. Use prompt-only video direction.",
+          analysis:
+  imageAnalysis ||
+  "No uploaded reference image. Use prompt-only video direction.",
           platform: videoFormat,
           length,
           videoFormat,
