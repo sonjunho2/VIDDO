@@ -76,6 +76,7 @@ useEffect(() => {
     }
 
     loadUser();
+    loadProjects();
   }, []);
 
   async function generateVideo() {
