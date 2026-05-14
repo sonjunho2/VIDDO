@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [generatedImage, setGeneratedImage] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [projects, setProjects] = useState<any[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState({
   analysis: "idle",
   motion: "idle",
