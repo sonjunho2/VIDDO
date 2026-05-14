@@ -485,9 +485,10 @@ if (imageData.success && imageData.imageBase64) {
                 ) : (
                   projects.map((project) => (
                     <div
-                      key={project.id}
-                      className="rounded-2xl border border-white/10 bg-black/30 p-3"
-                    >
+  key={project.id}
+  onClick={() => openProject(project)}
+  className="rounded-2xl border border-white/10 bg-black/30 p-3 cursor-pointer hover:border-blue-500/50 transition"
+>
                       {project.generated_image && (
                         <img
                           src={project.generated_image}
