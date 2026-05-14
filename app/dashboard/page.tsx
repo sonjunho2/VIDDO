@@ -423,33 +423,20 @@ if (imageData.success && imageData.imageBase64) {
           <div className="space-y-6">
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-
-              <div className="text-zinc-400 mb-4">
-                Current Plan
-              </div>
-
-              <div className="text-5xl font-black mb-6">
-                Starter
-              </div>
+              <div className="text-zinc-400 mb-4">Current Plan</div>
+              <div className="text-5xl font-black mb-6">Starter</div>
 
               <div className="w-full h-4 rounded-full bg-black/40 overflow-hidden mb-4">
                 <div className="w-[10%] h-full bg-blue-500"></div>
               </div>
 
-              <div className="text-zinc-400">
-                3 / 30 videos used
-              </div>
-
+              <div className="text-zinc-400">3 / 30 videos used</div>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-
-              <div className="text-zinc-400 mb-4">
-                Pipeline Status
-              </div>
+              <div className="text-zinc-400 mb-4">Pipeline Status</div>
 
               <div className="space-y-4 text-lg">
-
                 <div className="flex items-center justify-between">
                   <span>Analysis Engine</span>
                   <span>{pipelineStatus.analysis}</span>
@@ -469,9 +456,42 @@ if (imageData.success && imageData.imageBase64) {
                   <span>Auto Save System</span>
                   <span>{pipelineStatus.save}</span>
                 </div>
-
               </div>
+            </div>
 
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-zinc-400 mb-4">My Projects</div>
+
+              <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                {projects.length === 0 ? (
+                  <div className="text-zinc-500 text-sm">
+                    No saved projects yet
+                  </div>
+                ) : (
+                  projects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="rounded-2xl border border-white/10 bg-black/30 p-3"
+                    >
+                      {project.generated_image && (
+                        <img
+                          src={project.generated_image}
+                          alt="project"
+                          className="w-full h-32 object-cover rounded-xl mb-3"
+                        />
+                      )}
+
+                      <div className="text-sm text-zinc-300 line-clamp-2">
+                        {project.idea}
+                      </div>
+
+                      <div className="text-xs text-zinc-500 mt-2">
+                        {project.video_format}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
           </div>
