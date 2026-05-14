@@ -241,10 +241,44 @@ if (imageData.success && imageData.imageBase64) {
   files.map(
     (file) =>
       new Promise<string>((resolve) => {
+        const img = new Image();
         const reader = new FileReader();
 
-        reader.onloadend = () => {
-          resolve(reader.result as string);
+        reader.onload = (event) => {
+          img.src = event.target?.result as string;
+        };
+
+        img.onload = () => {
+          const canvas =
+            document.createElement("canvas");
+
+          const maxWidth = 512;
+
+          const scale =
+            maxWidth / img.width;
+
+          canvas.width = maxWidth;
+          canvas.height =
+            img.height * scale;
+
+          const ctx =
+            canvas.getContext("2d");
+
+          ctx?.drawImage(
+            img,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+          const compressed =
+            canvas.toDataURL(
+              "image/jpeg",
+              0.7
+            );
+
+          resolve(compressed);
         };
 
         reader.readAsDataURL(file);
