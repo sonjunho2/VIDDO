@@ -67,6 +67,21 @@ async function loadProjects() {
     setProjects(data);
   }
 }
+  function openProject(project: any) {
+  setIdea(project.idea || "");
+
+  setSceneOutput(
+    project.scene_output || ""
+  );
+
+  setGeneratedImage(
+    project.generated_image || ""
+  );
+
+  setVideoFormat(
+    project.video_format || "shorts"
+  );
+}
 useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
