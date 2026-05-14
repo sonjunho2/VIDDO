@@ -83,6 +83,54 @@ async function loadProjects() {
     project.video_format || "shorts"
   );
 }
+  async function generateMotionVideo() {
+  if (!generatedImage) return;
+
+  try {
+    setPipelineStatus({
+      analysis: "done",
+      motion: "running",
+      render: "idle",
+      save: "idle",
+    });
+
+    const response = await fetch(
+      "/api/generate-motion-video",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: generatedImage,
+          prompt: idea,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.videoUrl) {
+      setGeneratedVideo(data.videoUrl);
+
+      setPipelineStatus({
+        analysis: "done",
+        motion: "done",
+        render: "ready",
+        save: "idle",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+
+    setPipelineStatus({
+      analysis: "done",
+      motion: "error",
+      render: "idle",
+      save: "idle",
+    });
+  }
+}
 useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
