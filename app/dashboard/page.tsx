@@ -481,6 +481,17 @@ if (imageData.success && imageData.imageBase64) {
                 />
               </div>
             )}
+            {generatedVideo && (
+  <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+    <video
+      src={generatedVideo}
+      controls
+      autoPlay
+      loop
+      className="w-full rounded-2xl"
+    />
+  </div>
+)}
             {generatedImage && !generatedVideo && (
   <button
     onClick={generateMotionVideo}
