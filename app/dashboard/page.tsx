@@ -481,6 +481,14 @@ if (imageData.success && imageData.imageBase64) {
                 />
               </div>
             )}
+            {generatedImage && !generatedVideo && (
+  <button
+    onClick={generateMotionVideo}
+    className="mt-6 w-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 py-4 text-lg font-bold hover:opacity-90 transition"
+  >
+    Generate Motion Video
+  </button>
+)}
 
           </div>
 
