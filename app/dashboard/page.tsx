@@ -48,7 +48,25 @@ async function saveProject(
       },
     ]);
 }
+  
+async function loadProjects() {
+  const { data: userData } =
+    await supabase.auth.getUser();
 
+  if (!userData.user) return;
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("user_id", userData.user.id)
+    .order("created_at", {
+      ascending: false,
+    });
+
+  if (!error && data) {
+    setProjects(data);
+  }
+}
 useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
