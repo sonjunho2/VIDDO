@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [sceneOutput, setSceneOutput] = useState("");
   const [generatedImage, setGeneratedImage] = useState("");
+  const [generatedVideo, setGeneratedVideo] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [projects, setProjects] = useState<any[]>([]);
