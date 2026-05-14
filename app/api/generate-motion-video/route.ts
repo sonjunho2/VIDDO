@@ -51,8 +51,8 @@ Requirements:
       success: true,
       status: "queued",
       provider: "VIDDO Motion Engine v2",
-      previewVideo:
-        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      videoUrl:
+       "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
       cinematicMotionPrompt,
       videoFormat,
       aspectRatio,
