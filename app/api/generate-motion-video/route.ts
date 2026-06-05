@@ -1,10 +1,36 @@
 import { NextResponse } from "next/server";
 
 const PLATFORM_MOTION_RULES: Record<string, string> = {
-  shorts: "Fast vertical motion, social pacing, mobile safe framing",
-  longform: "Cinematic storytelling motion, smooth dolly movement",
-  square: "Centered motion optimized for social feeds",
+  shorts: "Fast vertical motion, social pacing, mobile safe framing, subtle camera push-in",
+  longform: "Cinematic storytelling motion, smooth dolly movement, natural camera movement",
+  square: "Centered motion optimized for social feeds, gentle camera orbit, clean composition",
 };
+
+function getAspectRatio(videoFormat: string) {
+  if (videoFormat === "longform") return "16:9";
+  if (videoFormat === "square") return "1:1";
+  return "9:16";
+}
+
+async function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getLumaGeneration(id: string) {
+  const response = await fetch(
+    `https://api.lumalabs.ai/dream-machine/v1/generations/${id}`,
+    {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${process.env.LUMA_API_KEY}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  return response.json();
+}
 
 export async function POST(req: Request) {
   try {
@@ -13,12 +39,23 @@ export async function POST(req: Request) {
     const image = body.image;
     const prompt = body.prompt || "";
     const videoFormat = body.videoFormat || "shorts";
-    const aspectRatio = body.aspectRatio || "9:16";
+    const aspectRatio = body.aspectRatio || getAspectRatio(videoFormat);
 
     if (!image) {
       return NextResponse.json(
         {
-          error: "Scene image is required",
+          error: "Scene image URL is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (typeof image === "string" && image.startsWith("data:image")) {
+      return NextResponse.json(
+        {
+          error: "Luma requires a public image URL. Please generate a new scene image after the Storage update.",
         },
         {
           status: 400,
@@ -47,12 +84,86 @@ Requirements:
 - Use dolly and tracking movement
 `;
 
+    const createResponse = await fetch(
+      "https://api.lumalabs.ai/dream-machine/v1/generations",
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${process.env.LUMA_API_KEY}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: cinematicMotionPrompt,
+          model: "ray-2",
+          resolution: "720p",
+          duration: "5s",
+          aspect_ratio: aspectRatio,
+          loop: false,
+          keyframes: {
+            frame0: {
+              type: "image",
+              url: image,
+            },
+          },
+        }),
+      }
+    );
+
+    const created = await createResponse.json();
+
+    if (!createResponse.ok) {
+      return NextResponse.json(
+        {
+          error: created?.detail || created?.error || "Luma generation request failed",
+          lumaResponse: created,
+        },
+        {
+          status: createResponse.status,
+        }
+      );
+    }
+
+    const generationId = created.id;
+
+    for (let i = 0; i < 8; i += 1) {
+      await wait(3000);
+
+      const generation = await getLumaGeneration(generationId);
+
+      if (generation.state === "completed" && generation.assets?.video) {
+        return NextResponse.json({
+          success: true,
+          status: "completed",
+          provider: "Luma Ray 2",
+          generationId,
+          videoUrl: generation.assets.video,
+          cinematicMotionPrompt,
+          videoFormat,
+          aspectRatio,
+        });
+      }
+
+      if (generation.state === "failed") {
+        return NextResponse.json(
+          {
+            error: generation.failure_reason || "Luma video generation failed",
+            generationId,
+            lumaResponse: generation,
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      status: "queued",
-      provider: "VIDDO Motion Engine v2",
-      videoUrl:
-       "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      status: "processing",
+      provider: "Luma Ray 2",
+      generationId,
+      videoUrl: null,
       cinematicMotionPrompt,
       videoFormat,
       aspectRatio,
