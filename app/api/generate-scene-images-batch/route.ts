@@ -1,9 +1,15 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
 
 type VideoFormat = "shorts" | "longform" | "square";
 
@@ -32,6 +38,36 @@ function getFormatSettings(value: string) {
   if (value === "longform") return FORMAT_SETTINGS.longform;
   if (value === "square") return FORMAT_SETTINGS.square;
   return FORMAT_SETTINGS.shorts;
+}
+
+function base64ToBuffer(base64: string) {
+  return Buffer.from(base64, "base64");
+}
+
+async function uploadImageToStorage(imageBase64: string) {
+  const fileName = `scene-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.png`;
+
+  const filePath = `scene-images/${fileName}`;
+  const imageBuffer = base64ToBuffer(imageBase64);
+
+  const { error } = await supabaseAdmin.storage
+    .from("generated-assets")
+    .upload(filePath, imageBuffer, {
+      contentType: "image/png",
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const { data } = supabaseAdmin.storage
+    .from("generated-assets")
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
 }
 
 export async function POST(req: Request) {
@@ -79,9 +115,23 @@ Style:
 
     const imageBase64 = response.data?.[0]?.b64_json;
 
+    if (!imageBase64) {
+      return NextResponse.json(
+        {
+          error: "No image generated",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const imageUrl = await uploadImageToStorage(imageBase64);
+
     return NextResponse.json({
       success: true,
       imageBase64,
+      imageUrl,
       videoFormat,
       aspectRatio: settings.aspectRatio,
       imageSize: settings.imageSize,
