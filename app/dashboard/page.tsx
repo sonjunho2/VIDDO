@@ -20,24 +20,18 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [projects, setProjects] = useState<any[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState({
-  analysis: "idle",
-  motion: "idle",
-  render: "idle",
-  save: "idle",
-});
+    analysis: "idle",
+    motion: "idle",
+    render: "idle",
+    save: "idle",
+  });
 
-async function saveProject(
-  sceneText: string,
-  imageUrl: string
-) {
-  const { data: userData } =
-    await supabase.auth.getUser();
+  async function saveProject(sceneText: string, imageUrl: string) {
+    const { data: userData } = await supabase.auth.getUser();
 
-  if (!userData.user) return;
+    if (!userData.user) return;
 
-  await supabase
-    .from("projects")
-    .insert([
+    await supabase.from("projects").insert([
       {
         user_id: userData.user.id,
         idea,
@@ -48,90 +42,101 @@ async function saveProject(
         voice,
       },
     ]);
-}
-  
-async function loadProjects() {
-  const { data: userData } =
-    await supabase.auth.getUser();
 
-  if (!userData.user) return;
-
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", userData.user.id)
-    .order("created_at", {
-      ascending: false,
-    });
-
-  if (!error && data) {
-    setProjects(data);
+    await loadProjects();
   }
-}
+
+  async function loadProjects() {
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) return;
+
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", userData.user.id)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (!error && data) {
+      setProjects(data);
+    }
+  }
+
   function openProject(project: any) {
-  setIdea(project.idea || "");
+    setIdea(project.idea || "");
+    setSceneOutput(project.scene_output || "");
+    setGeneratedImage(project.generated_image || "");
+    setGeneratedVideo(project.video_url || "");
+    setVideoFormat(project.video_format || "shorts");
+  }
 
-  setSceneOutput(
-    project.scene_output || ""
-  );
-
-  setGeneratedImage(
-    project.generated_image || ""
-  );
-
-  setVideoFormat(
-    project.video_format || "shorts"
-  );
-}
   async function generateMotionVideo() {
-  if (!generatedImage) return;
+    if (!generatedImage) return;
 
-  try {
-    setPipelineStatus({
-      analysis: "done",
-      motion: "running",
-      render: "idle",
-      save: "idle",
-    });
+    try {
+      setError("");
+      setPipelineStatus({
+        analysis: "done",
+        motion: "running",
+        render: "idle",
+        save: "idle",
+      });
 
-    const response = await fetch(
-      "/api/generate-motion-video",
-      {
+      const response = await fetch("/api/generate-motion-video", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image: generatedImage,
-          prompt: idea,
+          prompt: sceneOutput || idea,
+          videoFormat,
         }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Motion video generation failed");
       }
-    );
 
-    const data = await response.json();
+      if (data.videoUrl) {
+        setGeneratedVideo(data.videoUrl);
 
-    if (data.videoUrl) {
-      setGeneratedVideo(data.videoUrl);
+        setPipelineStatus({
+          analysis: "done",
+          motion: "done",
+          render: "ready",
+          save: "idle",
+        });
+      } else {
+        setPipelineStatus({
+          analysis: "done",
+          motion: data.status || "processing",
+          render: "idle",
+          save: "idle",
+        });
+
+        setError(
+          "Motion video is still processing. Please try Generate Motion Video again in a moment."
+        );
+      }
+    } catch (error: any) {
+      console.error(error);
+      setError(error.message || "Motion video generation failed");
 
       setPipelineStatus({
         analysis: "done",
-        motion: "done",
-        render: "ready",
+        motion: "error",
+        render: "idle",
         save: "idle",
       });
     }
-  } catch (error) {
-    console.error(error);
-
-    setPipelineStatus({
-      analysis: "done",
-      motion: "error",
-      render: "idle",
-      save: "idle",
-    });
   }
-}
-useEffect(() => {
+
+  useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
 
@@ -150,6 +155,7 @@ useEffect(() => {
     setError("");
     setSceneOutput("");
     setGeneratedImage("");
+    setGeneratedVideo("");
 
     setPipelineStatus({
       analysis: "running",
@@ -161,26 +167,23 @@ useEffect(() => {
     try {
       let imageAnalysis = "";
 
-if (uploadedImages.length > 0) {
-  const analysisResponse = await fetch(
-    "/api/analyze-images",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        images: uploadedImages,
-      }),
-    }
-  );
+      if (uploadedImages.length > 0) {
+        const analysisResponse = await fetch("/api/analyze-images", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            images: uploadedImages,
+          }),
+        });
 
-  const analysisData = await analysisResponse.json();
+        const analysisData = await analysisResponse.json();
 
-  imageAnalysis =
-    analysisData.analysis ||
-    "Uploaded image analysis unavailable";
-}
+        imageAnalysis =
+          analysisData.analysis || "Uploaded image analysis unavailable";
+      }
+
       const response = await fetch("/api/generate-scenes", {
         method: "POST",
         headers: {
@@ -189,8 +192,8 @@ if (uploadedImages.length > 0) {
         body: JSON.stringify({
           idea,
           analysis:
-  imageAnalysis ||
-  "No uploaded reference image. Use prompt-only video direction.",
+            imageAnalysis ||
+            "No uploaded reference image. Use prompt-only video direction.",
           platform: videoFormat,
           length,
           videoFormat,
@@ -205,39 +208,35 @@ if (uploadedImages.length > 0) {
 
       setSceneOutput(data.scenes || "No scenes generated");
 
-      const imageResponse = await fetch(
-  "/api/generate-scene-images-batch",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      scenes: [data.scenes],
-      settings: {
-        imageSize:
-          videoFormat === "longform"
-            ? "1536x1024"
-            : "1024x1536",
-      },
-    }),
-  }
-);
+      const imageResponse = await fetch("/api/generate-scene-images-batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          scenes: [data.scenes],
+          videoFormat,
+          settings: {
+            imageSize: videoFormat === "longform" ? "1536x1024" : "1024x1536",
+          },
+        }),
+      });
 
-const imageData = await imageResponse.json();
+      const imageData = await imageResponse.json();
 
-console.log("IMAGE RESPONSE:", imageData);
+      console.log("IMAGE RESPONSE:", imageData);
 
-if (imageData.success && imageData.imageBase64) {
-  const imageUrl = `data:image/png;base64,${imageData.imageBase64}`;
+      if (!imageResponse.ok) {
+        throw new Error(imageData.error || "Scene image generation failed");
+      }
 
-  setGeneratedImage(imageUrl);
+      if (imageData.success && imageData.imageUrl) {
+        const imageUrl = imageData.imageUrl;
 
-  await saveProject(
-  data.scenes || "",
-  imageUrl
-);
-}
+        setGeneratedImage(imageUrl);
+
+        await saveProject(data.scenes || "", imageUrl);
+      }
 
       setPipelineStatus({
         analysis: "done",
@@ -269,14 +268,11 @@ if (imageData.success && imageData.imageBase64) {
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8">
       <div className="max-w-7xl mx-auto">
-
         <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-5xl font-black">VIDDO</h1>
 
-            <p className="text-zinc-400 mt-2">
-              Logged in as: {email}
-            </p>
+            <p className="text-zinc-400 mt-2">Logged in as: {email}</p>
           </div>
 
           <div className="px-5 py-3 rounded-2xl border border-white/10 bg-white/5">
@@ -285,9 +281,7 @@ if (imageData.success && imageData.imageBase64) {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-
           <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-gradient-to-br from-[#182449] to-[#1A103D] p-8">
-
             <div className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm mb-6">
               Creator Dashboard
             </div>
@@ -301,7 +295,6 @@ if (imageData.success && imageData.imageBase64) {
             </p>
 
             <div className="rounded-3xl border border-white/10 bg-black/30 p-6 mb-6">
-
               <label className="text-zinc-400 text-sm block mb-4">
                 Your Idea
               </label>
@@ -314,91 +307,82 @@ if (imageData.success && imageData.imageBase64) {
               />
 
               <div className="mt-4">
-  <input
-    type="file"
-    multiple
-    accept="image/*"
-    onChange={(e) => {
-      const files = Array.from(e.target.files || []);
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
 
-      Promise.all(
-  files.map(
-    (file) =>
-      new Promise<string>((resolve) => {
-        const img = new Image();
-        const reader = new FileReader();
+                    Promise.all(
+                      files.map(
+                        (file) =>
+                          new Promise<string>((resolve) => {
+                            const img = new Image();
+                            const reader = new FileReader();
 
-        reader.onload = (event) => {
-          img.src = event.target?.result as string;
-        };
+                            reader.onload = (event) => {
+                              img.src = event.target?.result as string;
+                            };
 
-        img.onload = () => {
-          const canvas =
-            document.createElement("canvas");
+                            img.onload = () => {
+                              const canvas = document.createElement("canvas");
+                              const maxWidth = 512;
+                              const scale = maxWidth / img.width;
 
-          const maxWidth = 512;
+                              canvas.width = maxWidth;
+                              canvas.height = img.height * scale;
 
-          const scale =
-            maxWidth / img.width;
+                              const ctx = canvas.getContext("2d");
 
-          canvas.width = maxWidth;
-          canvas.height =
-            img.height * scale;
+                              ctx?.drawImage(
+                                img,
+                                0,
+                                0,
+                                canvas.width,
+                                canvas.height
+                              );
 
-          const ctx =
-            canvas.getContext("2d");
+                              const compressed = canvas.toDataURL(
+                                "image/jpeg",
+                                0.7
+                              );
 
-          ctx?.drawImage(
-            img,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
+                              resolve(compressed);
+                            };
 
-          const compressed =
-            canvas.toDataURL(
-              "image/jpeg",
-              0.7
-            );
+                            reader.readAsDataURL(file);
+                          })
+                      )
+                    ).then((base64Images) => {
+                      setUploadedImages(base64Images);
+                    });
+                  }}
+                  className="block w-full text-sm text-zinc-400"
+                />
+              </div>
 
-          resolve(compressed);
-        };
-
-        reader.readAsDataURL(file);
-      })
-  )
-).then((base64Images) => {
-  setUploadedImages(base64Images);
-});
-    }}
-    className="block w-full text-sm text-zinc-400"
-  />
-</div>
-{uploadedImages.length > 0 && (
-  <div className="grid grid-cols-2 gap-4 mt-6">
-    {uploadedImages.map((image, index) => (
-      <div
-        key={index}
-        className="rounded-2xl overflow-hidden border border-white/10"
-      >
-        <img
-          src={image}
-          alt={`upload-${index}`}
-          className="w-full h-40 object-cover"
-        />
-      </div>
-    ))}
-  </div>
-)}
+              {uploadedImages.length > 0 && (
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  {uploadedImages.map((image, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl overflow-hidden border border-white/10"
+                    >
+                      <img
+                        src={image}
+                        alt={`upload-${index}`}
+                        className="w-full h-40 object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
-
               <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-zinc-400 text-sm mb-2">
-                  Format
-                </div>
+                <div className="text-zinc-400 text-sm mb-2">Format</div>
 
                 <select
                   value={videoFormat}
@@ -412,9 +396,7 @@ if (imageData.success && imageData.imageBase64) {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-zinc-400 text-sm mb-2">
-                  Length
-                </div>
+                <div className="text-zinc-400 text-sm mb-2">Length</div>
 
                 <select
                   value={length}
@@ -428,9 +410,7 @@ if (imageData.success && imageData.imageBase64) {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-zinc-400 text-sm mb-2">
-                  Voice
-                </div>
+                <div className="text-zinc-400 text-sm mb-2">Voice</div>
 
                 <select
                   value={voice}
@@ -441,7 +421,6 @@ if (imageData.success && imageData.imageBase64) {
                   <option>Female</option>
                 </select>
               </div>
-
             </div>
 
             <button
@@ -467,8 +446,12 @@ if (imageData.success && imageData.imageBase64) {
 
             {sceneOutput && (
               <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6">
-                <div className="text-zinc-400 text-sm mb-3">Generated Scene Direction</div>
-                <pre className="whitespace-pre-wrap text-sm leading-7 text-zinc-200">{sceneOutput}</pre>
+                <div className="text-zinc-400 text-sm mb-3">
+                  Generated Scene Direction
+                </div>
+                <pre className="whitespace-pre-wrap text-sm leading-7 text-zinc-200">
+                  {sceneOutput}
+                </pre>
               </div>
             )}
 
@@ -481,30 +464,30 @@ if (imageData.success && imageData.imageBase64) {
                 />
               </div>
             )}
-            {generatedVideo && (
-  <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
-    <video
-      src={generatedVideo}
-      controls
-      autoPlay
-      loop
-      className="w-full rounded-2xl"
-    />
-  </div>
-)}
-            {generatedImage && !generatedVideo && (
-  <button
-    onClick={generateMotionVideo}
-    className="mt-6 w-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 py-4 text-lg font-bold hover:opacity-90 transition"
-  >
-    Generate Motion Video
-  </button>
-)}
 
+            {generatedVideo && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+                <video
+                  src={generatedVideo}
+                  controls
+                  autoPlay
+                  loop
+                  className="w-full rounded-2xl"
+                />
+              </div>
+            )}
+
+            {generatedImage && !generatedVideo && (
+              <button
+                onClick={generateMotionVideo}
+                className="mt-6 w-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 py-4 text-lg font-bold hover:opacity-90 transition"
+              >
+                Generate Motion Video
+              </button>
+            )}
           </div>
 
           <div className="space-y-6">
-
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
               <div className="text-zinc-400 mb-4">Current Plan</div>
               <div className="text-5xl font-black mb-6">Starter</div>
@@ -553,10 +536,10 @@ if (imageData.success && imageData.imageBase64) {
                 ) : (
                   projects.map((project) => (
                     <div
-  key={project.id}
-  onClick={() => openProject(project)}
-  className="rounded-2xl border border-white/10 bg-black/30 p-3 cursor-pointer hover:border-blue-500/50 transition"
->
+                      key={project.id}
+                      onClick={() => openProject(project)}
+                      className="rounded-2xl border border-white/10 bg-black/30 p-3 cursor-pointer hover:border-blue-500/50 transition"
+                    >
                       {project.generated_image && (
                         <img
                           src={project.generated_image}
@@ -577,9 +560,7 @@ if (imageData.success && imageData.imageBase64) {
                 )}
               </div>
             </div>
-
           </div>
-
         </div>
       </div>
     </main>
